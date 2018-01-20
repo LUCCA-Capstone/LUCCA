@@ -4,17 +4,15 @@ var path = require('path');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
+  res.send('This is home!');
 });
 
 router.get('/adminLogin', function(req, res) {
-  var adminFilePath = path.resolve(__dirname, '..', 'views', 'adminLogin.html');
-  res.sendFile(adminFilePath);
+  res.render('adminLogin.njk');
 });
 
-
 router.get('/badgein', function(req, res) {
-  var UserSignInPath = path.resolve(__dirname, '..', 'views', 'UserSignIn.html');
-  res.sendFile(UserSignInPath);
+  res.render('UserSignIn.njk');
 });
 
 module.exports = router;
