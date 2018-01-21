@@ -66,10 +66,6 @@ def validate_response(response, request, assertions):
     failures += 1
     print("Response validation failure: " + str(e))
 
-    # TODO: write a nested loop that iterates over all conditional assertion test tuples:
-    #       - for each one, check if all its conditional tests hold
-    #       - if they all do, verify that all the associated assertions hold
-    #       - do this with test_header_assertion() and test_body_assertion()
   for conditions, cond_assertions in assertions['conditional']:
     # Test to see if the conditions hold true
     try:
@@ -81,27 +77,37 @@ def validate_response(response, request, assertions):
       # Check response code condition
       validate_rcode_assertion(assertions['rcode'], response)
     except (KeyError, ValueError):
-      # If any condition does not hold, the conitional assertion is vacuous - stop processing and move on
+      # If any condition does not hold, the conditional assertion is vacuous - stop processing and move on
       continue
 
-    for header, pattern in cond_assertions['headers'].items():
-      try:
-        validate_header_assertion(header, pattern, response)
-      except (KeyError, ValueError) as e:
-        failures += 1
-        print("Response validation failure in headers : " + str(e))
+    try:
+      for header, pattern in cond_assertions['headers'].items():
+        try:
+          validate_header_assertion(header, pattern, response)
+        except (KeyError, ValueError) as e:
+          failures += 1
+          print("Response validation failure in headers : " + str(e))
+    except KeyError:
+        # A KeyError caught here indicates there are no conditional assertions on the response
+        pass
 
-      try:
-        validate_body_assertion(cond_assertions['body'], response)
-      except ValueError as e:
-        failures += 1
-        print("Response validation failure in body: " + str(e))
+    try:
+      validate_body_assertion(cond_assertions['body'], response)
+    except ValueError as e:
+      failures += 1
+      print("Response validation failure in body: " + str(e))
+    except KeyError:
+      # this indicates no conditional assertions on the body
+      pass
 
-      try:
-        validate_rcode_assertion(cond_assertions['rcode'], response)
-      except ValueError as e:
-        failures += 1
-        print("Response validation failure: " + str(e))
+    try:
+      validate_rcode_assertion(cond_assertions['rcode'], response)
+    except ValueError as e:
+      failures += 1
+      print("Response validation failure: " + str(e))
+    except KeyError:
+      # this indicates no conditional assertions on the rsponse code
+      pass
 
   if failures:
     print("{0} failures were encountered while validating the endpoint response.")
@@ -109,13 +115,14 @@ def validate_response(response, request, assertions):
   else:
     return True
 
-def user_access(cert, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
+def user_access(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
   """
   Send a user-access API action, as detailed in section 4.2. of the station API specification
   """
+  schema = 'https://' if use_ssl else 'http://'
   headers={ 'Station-ID' : station_id }
   s = requests.Session()
-  req = requests.Request('POST', 'https://' + controller + '/api/user-access', data=user_id, headers=headers)
+  req = requests.Request('POST', schema + controller + '/api/user-access', data=user_id, headers=headers)
   prep = req.prepare()
   try:
     resp = s.send(prep, cert=cert)
@@ -125,7 +132,7 @@ def user_access(cert, controller=_defaults['controller'], station_id=_defaults['
 
   assertions = {
              'headers'     : {}, # No universal header assertions
-             'body'        : r'^$', # Response body should always be empty
+             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
              'rcode'       : [200, 401, 403], # These are the only expected response codes (400 indicates an error in this test)
              'conditional' : [ # Conditional tests to run based on circumstances go here
                                ( # First conditional assertion 
@@ -161,13 +168,14 @@ def user_access(cert, controller=_defaults['controller'], station_id=_defaults['
            }
   return validate_response(resp, prep, assertions)
 
-def local_reset(cert, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
+def local_reset(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
   """
   Send a local-reset API action, as detailed in section 4.3. of the station API specification
   """
+  schema = 'https://' if use_ssl else 'http://'
   headers={ 'Station-ID' : station_id }
   s = requests.Session()
-  req = requests.Request('POST', 'https://' + controller + '/api/local-reset', headers=headers)
+  req = requests.Request('POST', schema + controller + '/api/local-reset', headers=headers)
   prep = req.prepare()
   try:
     resp = s.send(prep, cert=cert)
@@ -177,19 +185,20 @@ def local_reset(cert, controller=_defaults['controller'], station_id=_defaults['
 
   assertions = {
              'headers'     : {},
-             'body'        : r'^$',
+             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
              'rcode'       : [200, 401, 403],
              'conditional' : []
            }
   return validate_response(resp, prep, assertions)
 
-def last_state(cert, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
+def last_state(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
   """
   Send a last-state API action, as detailed in section 4.4. of the station API specification
   """
+  schema = 'https://' if use_ssl else 'http://'
   headers={ 'Station-ID' : station_id }
   s = requests.Session()
-  req = requests.Request('GET', 'https://' + controller + '/api/last-state', headers=headers)
+  req = requests.Request('GET', schema + controller + '/api/last-state', headers=headers)
   prep = req.prepare()
   try:
     resp = s.send(prep, cert=cert)
@@ -199,7 +208,7 @@ def last_state(cert, controller=_defaults['controller'], station_id=_defaults['s
 
   assertions = {
              'headers'     : {},
-             'body'        : r'^$',
+             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
              'rcode'       : [200, 401, 403],
              'conditional' : [
                                ( # If response code is 200, Station-State header should be included
@@ -229,13 +238,14 @@ def last_state(cert, controller=_defaults['controller'], station_id=_defaults['s
            }
   return validate_response(resp, prep, assertions)
 
-def station_heartbeat(cert, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
+def station_heartbeat(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
   """
   Send a station-heartbeat API action, as detailed in section 4.5. of the station API specification
   """
+  schema = 'https://' if use_ssl else 'http://'
   headers = { 'Station-ID' : station_id }
   s = requests.Session()
-  req = requests.Request('POST', 'https://' + controller + '/api/station-heartbeat', data=user_id, headers=headers)
+  req = requests.Request('POST', schema + controller + '/api/station-heartbeat', data=user_id, headers=headers)
   prep = req.prepare()
   try:
     resp = s.send(prep, cert=cert)
@@ -245,7 +255,7 @@ def station_heartbeat(cert, controller=_defaults['controller'], station_id=_defa
 
   assertions = {
                  'headers'     : {},
-                 'body'        : r'^$',
+                 'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
                  'rcode'       : [200, 401, 403],
                  'conditional' : [
                                    ( # If response code is 200, expect a Date header
@@ -279,6 +289,7 @@ if __name__ == '__main__':
   cert_parser = parser.add_mutually_exclusive_group(required=True)
   cert_parser.add_argument('-C', '--certificate', dest='cert', help="Path to a PEM certificate file")
   cert_parser.add_argument('--no-certificate', dest='cert', const=None, action='store_const')
+  cert_parser.add_argument('--no-ssl', dest='use_ssl', const=False, action='store_const', default=True)
   action_parser = parser.add_mutually_exclusive_group(required=True)
   action_parser.add_argument('-U', '--user-access', dest='action', const='user-access', action='store_const')
   action_parser.add_argument('-R', '--local-reset', dest='action', const='local-reset', action='store_const')
