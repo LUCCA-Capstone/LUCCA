@@ -115,7 +115,7 @@ def validate_response(response, request, assertions):
   else:
     return True
 
-def user_access(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
+def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
   """
   Send a user-access API action, as detailed in section 4.2. of the station API specification
   """
@@ -125,7 +125,7 @@ def user_access(cert, use_ssl=True, controller=_defaults['controller'], station_
   req = requests.Request('POST', schema + controller + '/api/user-access', data=user_id, headers=headers)
   prep = req.prepare()
   try:
-    resp = s.send(prep, cert=cert)
+    resp = s.send(prep, cert=cert, verify=verify)
   except requests.exceptions.ConnectionError as e:
     print("Response error: " + str(e))
     return False
@@ -168,7 +168,7 @@ def user_access(cert, use_ssl=True, controller=_defaults['controller'], station_
            }
   return validate_response(resp, prep, assertions)
 
-def local_reset(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
+def local_reset(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
   """
   Send a local-reset API action, as detailed in section 4.3. of the station API specification
   """
@@ -178,7 +178,7 @@ def local_reset(cert, use_ssl=True, controller=_defaults['controller'], station_
   req = requests.Request('POST', schema + controller + '/api/local-reset', headers=headers)
   prep = req.prepare()
   try:
-    resp = s.send(prep, cert=cert)
+    resp = s.send(prep, cert=cert, verify=verify)
   except requests.exceptions.ConnectionError as e:
     print("Response error: " + str(e))
     return False
@@ -191,7 +191,7 @@ def local_reset(cert, use_ssl=True, controller=_defaults['controller'], station_
            }
   return validate_response(resp, prep, assertions)
 
-def last_state(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
+def last_state(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], **kwargs):
   """
   Send a last-state API action, as detailed in section 4.4. of the station API specification
   """
@@ -201,7 +201,7 @@ def last_state(cert, use_ssl=True, controller=_defaults['controller'], station_i
   req = requests.Request('GET', schema + controller + '/api/last-state', headers=headers)
   prep = req.prepare()
   try:
-    resp = s.send(prep, cert=cert)
+    resp = s.send(prep, cert=cert, verify=verify)
   except requests.exceptions.ConnectionError as e:
     print("Response error: " + str(e))
     return False
@@ -238,7 +238,7 @@ def last_state(cert, use_ssl=True, controller=_defaults['controller'], station_i
            }
   return validate_response(resp, prep, assertions)
 
-def station_heartbeat(cert, use_ssl=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
+def station_heartbeat(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
   """
   Send a station-heartbeat API action, as detailed in section 4.5. of the station API specification
   """
@@ -248,7 +248,7 @@ def station_heartbeat(cert, use_ssl=True, controller=_defaults['controller'], st
   req = requests.Request('POST', schema + controller + '/api/station-heartbeat', data=user_id, headers=headers)
   prep = req.prepare()
   try:
-    resp = s.send(prep, cert=cert)
+    resp = s.send(prep, cert=cert, verify=verify)
   except requests.exceptions.ConnectionError as e:
     print("Response error: " + str(e))
     return False
@@ -286,6 +286,7 @@ if __name__ == '__main__':
   parser.add_argument('-i', '--station-id', dest='station_id', default=_defaults['station_id'], help="Station-ID header value to pass in the chosen action")
   parser.add_argument('-u', '--user-id', dest='user_id', default=_defaults['user_id'], help="User ID token (not display name), passed as the request body for user-access actions. Ignored when specified with other action types.")
   parser.add_argument('-t', '--timeout', dest='timeout', default=_defaults['timeout'], help="Request timeout duration for HTTP requests used to invoke API actions. [default: 2.0 sec]")
+  parser.add_argument('--no-verify', dest='verify', const=False, action='store_const', default=True)
   cert_parser = parser.add_mutually_exclusive_group(required=True)
   cert_parser.add_argument('-C', '--certificate', dest='cert', help="Path to a PEM certificate file")
   cert_parser.add_argument('--no-certificate', dest='cert', const=None, action='store_const')
