@@ -4,7 +4,7 @@ var path = require('path');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.send('This is home!');
+  res.render('HomePage.njk');
 });
 
 router.get('/adminLogin', function(req, res) {
