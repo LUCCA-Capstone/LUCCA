@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+var config = require('../local_modules/config');
+
 /**
  * Module dependencies.
  */
@@ -9,10 +11,13 @@ var debug = require('debug')('lucca:server');
 var http = require('http');
 
 /**
- * Get port from environment and store in Express.
+ * Get interface address and port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var bind_addr = process.env.BIND_ADDRESS || config.get('Server', 'bind_address') || '0.0.0.0';
+app.set('bind_addr', bind_addr);
+
+var port = normalizePort(process.env.PORT || config.get('Server', 'bind_port') || '3000');
 app.set('port', port);
 
 /**
@@ -22,10 +27,10 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * Listen on provided port, on specified network interface(s).
  */
 
-server.listen(port);
+server.listen(port, bind_addr);
 server.on('error', onError);
 server.on('listening', onListening);
 
