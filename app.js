@@ -6,6 +6,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var nunjucks = require('nunjucks');
 
+var config = require('./local_modules/config');
+
 var index = require('./routes/index');
 var users = require('./routes/users');
 
