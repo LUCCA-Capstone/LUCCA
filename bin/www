@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var config = require('../local_modules/config');
+var fs = require('fs')
 
 /**
  * Module dependencies.
@@ -8,7 +9,7 @@ var config = require('../local_modules/config');
 
 var app = require('../app');
 var debug = require('debug')('lucca:server');
-var http = require('http');
+var https = require('https');
 
 /**
  * Get interface address and port from environment and store in Express.
@@ -17,14 +18,18 @@ var http = require('http');
 var bind_addr = process.env.BIND_ADDRESS || config.get('Server', 'bind_address') || '0.0.0.0';
 app.set('bind_addr', bind_addr);
 
-var port = normalizePort(process.env.PORT || config.get('Server', 'bind_port') || '3000');
+var port = normalizePort(process.env.PORT || config.get('Server', 'bind_port') || '443');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = https.createServer({
+    'pfx': fs.readFileSync(config.get('Server', 'pkcs_cert_file')),
+    'requestCert': config.get('Server', 'require_client_certificates') == 'false' ? false : true,
+    'rejectUnauthorized': config.get('Server', 'require_client_certificates') == 'false' ? false : true
+  }, app);
 
 /**
  * Listen on provided port, on specified network interface(s).
@@ -94,4 +99,15 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+}
+
+if( config.get('Server', 'redirect_port_80') != "no" ){
+  var http = require('http');
+  var http_redirector = http.createServer(
+    function(req, res) {  
+      res.writeHead(307, { "Location": "https://" + req.headers['host'].split(':')[0] + ':' + port + req.url });
+      res.end();
+    }
+  ).listen(8080);
+
 }
