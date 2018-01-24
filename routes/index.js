@@ -15,4 +15,8 @@ router.get('/badgein', function(req, res) {
   res.render('badgein.njk');
 });
 
+router.get('/registration', function(req, res) {
+  res.render('registration.njk');
+});
+
 module.exports = router;
