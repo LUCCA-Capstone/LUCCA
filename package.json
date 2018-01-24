@@ -8,14 +8,17 @@
   },
   "dependencies": {
     "body-parser": "~1.17.1",
+    "configparser": "^0.1.5",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
     "morgan": "~1.8.1",
     "nunjucks": "^3.0.1",
+    "pg": "^7.4.1",
+    "pg-hstore": "^2.3.2",
     "request": "^2.83.0",
-    "serve-favicon": "~2.4.2",
-    "configparser": "~0.1.5"
+    "sequelize": "^4.32.1",
+    "serve-favicon": "~2.4.2"
   },
   "devDependencies": {
     "chai": "^4.1.2",
