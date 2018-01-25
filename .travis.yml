@@ -1,8 +1,12 @@
 language: node_js
 node_js:
   - "node"
+python:
+  - "3.6"
 
 #This script should fix the "Error - Mocha permissions denied"
 before_script: 
   - chmod 0777 ./node_modules/.bin/mocha
   - npm start &
+#Command to run python test
+script: python ./test/bin/station-sim.py3 -c localhost:3000 -U --no-certificate
