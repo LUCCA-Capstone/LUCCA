@@ -1,0 +1,44 @@
+body {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #eee;
+}
+
+h1 {
+    color: black;
+    position: absolute;
+    font-size: x-large;
+    left: 0;
+    top:33%;
+    width:100%;
+    text-align:center;
+
+}
+
+.center {
+    position: absolute;
+    left: 0;
+    top:40%;
+    width:100%;
+    text-align:center;
+    font-size: 23px;
+}
+
+
+.btn-primary{
+    color: white;
+    padding: 15px 60px;
+    text-align: center;
+    font-size: 15px;
+    margin: 4px 4px;
+    position: absolute;
+    left: 44%;
+    top:50%;
+}
+
+
+
+
+
+
+

@@ -12,7 +12,7 @@ router.get('/adminLogin', function(req, res) {
 });
 
 router.get('/badgein', function(req, res) {
-  res.render('UserSignIn.njk');
+  res.render('badgein.njk');
 });
 
 module.exports = router;
