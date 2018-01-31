@@ -1,22 +1,23 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Accounts', {
-      badge: {
-        type: Sequelize.STRING,
-        onDelete: 'CASCADE',
-        references: {
-          model: 'Users',
-          key: 'badge'
-        }
-      },
-      email: {
+    return queryInterface.createTable('machines', {
+      sId: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.STRING,
-      },
-      password: {
         type: Sequelize.STRING
+      },
+      name: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
+      description: {
+        defualtVale: null,
+        type: Sequelize.STRING
+      },
+      registered: {
+        defaultValue: false,
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
@@ -29,6 +30,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Accounts');
+    return queryInterface.dropTable('machines');
   }
 };

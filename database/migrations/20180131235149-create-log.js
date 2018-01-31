@@ -1,27 +1,27 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('Machines', {
-      sId: {
-        allowNull: false,
+    return queryInterface.createTable('logs', {
+      id: {
+        autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
-      mId: {
-        allowNull: false,
-        primaryKey: true,
-        type: Sequelize.STRING
-      },
-      mDescription: {
-        type: Sequelize.STRING
-      },
-      status: {
+      eventType: {
         allowNull: false,
         type: Sequelize.STRING
+      },
+      event: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE
       }
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('Machines');
+    return queryInterface.dropTable('logs');
   }
 };

@@ -1,26 +1,25 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  var machine = sequelize.define('machine', {
-      sId:
+  var privileges = sequelize.define('privileges', {
+      id:
           {
-              type: DataTypes.STRING,
-              allowNull: false,
+              type: DataTypes.INTEGER,
+              autoIncrement: true,
               primaryKey: true
           },
-      name:
+      badge:
           {
               type: DataTypes.STRING,
               allowNull: false
           },
-      description:
+      sId:
           {
               type: DataTypes.STRING,
-              defaultValue: null
+              allowNull: false
           },
-      registered:
+      trained:
           {
-              type: DataTypes.BOOLEAN,
-              defaultValue: false
+            type: DataTypes.BOOLEAN
           },
       createdAt:
           {
@@ -34,13 +33,19 @@ module.exports = (sequelize, DataTypes) => {
           }
   });
 
-    machine.associate = (models) => {
+    privileges.associate = (models) => {
         //add associations
-        machine.hasMany(models.privileges, {
-            foreignKey: 'sId',
-            onDelete: 'CASCADE'
+        privileges.belongsTo(models.user, {
+           foreignKey: 'badge',
+           onDelete: 'CASCADE'
+        });
+
+        privileges.belongsTo(models.machine, {
+           foreignKey: 'sId',
+           onDelete: 'CASCADE'
         });
     };
 
-  return machine;
+
+  return privileges;
 };

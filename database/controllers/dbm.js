@@ -1,7 +1,6 @@
 //Bryan Mikkelson, 01-28-2018, LUCCA Project
 //Updated - 01-30-2018
-const User = require('../models').User;
-const RegInfo = require('../models').RegInfo;
+const user = require('../models').user;
 const db = require('../models');
 
 /*
@@ -48,8 +47,34 @@ module.exports = {
     //Description:  This function will return all User data from
     // the given start date to the given end date.  If start date
     // is undefined then all users will be returned.
-    getUser(from, to){
-        return true;
+    getUsers(from, to){
+        if(from === undefined && to === undefined){
+            //Return all results
+            return user.findAll({
+                raw: true
+            }).then(users =>{
+                return users;
+        }).catch(err =>{
+                return false;
+        });
+        }else{
+            var start = '\'' + from + '%\'';  //Date format should be year-month-day (ex. 2000-01-01)
+            var stop = '\'' + to + '%\'';     //Date format should be year-month-day (ex. 2000-01-01)
+
+            //Return only results between start date and stop date.
+            return db.sequelize.query("SELECT * FROM \"public\".\"users\"" +
+                " where \"public\".\"users\".\"createdAt\" between " +
+                start + " AND " + stop, {raw: true}
+            ).then(results => {
+                //Strips out all unneeded information that is returned
+                //from the query above and only keeps the user data
+                var resultsJson = results[0];
+            return resultsJson;
+
+        }).catch(err => {
+            return false;
+        });
+        }
     },
 
     //Usage: Add a new User to the DB
@@ -60,48 +85,28 @@ module.exports = {
     //Description:  This function will take as argument a JSON object
     // with all required user data and then store that data in a backend DB.
     createUser(userData){
-      //Ensures that both transactions, create user and create registration information,
-      //both succeed, or neither succeed.
-      return db.sequelize.transaction(function (t){
-          var returnStatus = {result: true, detail: 'Success'};
+      var returnStatus = {result: true, detail: 'Success'};
 
-          //Adds new users data to the User table
-          return User.create({
-             badge: userData.badge,             //Badge #
-             firstName: userData.firstName,    //First Name
-             lastName: userData.lastName,      //Last Name
-             status: userData.status,          //Status (user, manager, admin)
-             createdAt: new Date(),            //Date data was added
-             updatedAt: new Date()             //Most recent update to the data
-         }, {transaction: t}).then(function(){
-             //Add new registration data to the RegInfo table
-             return RegInfo.create({
-              badge: userData.badge,              //badge #
-              email: userData.email,              //email
-              signature: userData.signature,      //Users signature
-              association: 'PSU',                 //School
-              date: new Date(userData.date),      //year-month-day (01-01-01)
-              phone: userData.phone,              //User's phone #
-              ecName: userData.ecName,            //Emergency Contact Name
-              ecRelation: userData.ecRelation,    //Emergency Contact Relation
-              ecPhone: userData.ecPhone,          //Emergency Contact phone
-              createdAt: new Date(),              //Date data was added
-              updatedAt: new Date()               //Most recent update to the data
-             }, {transaction: t}).then(function (){
-                 //Transaction completed
-                 return returnStatus;
-             }).catch(error =>{
-                 //Transaction incomplete -
-                 //Error occurred when adding data to the
-                 //RegInfo table.
-                 return module.exports.errorHandling(error, returnStatus);
-             })
-         }).catch(error =>{
-              //Transaction incomplete -
-              //Error occurred when adding data to the
-              //User table.
-              return module.exports.errorHandling(error, returnStatus);
-          })
+      return user.create({
+          badge: userData.badge,               //badge#
+          first: userData.firstName,           //first name
+          last: userData.lastName,             //last name
+          email: userData.email,               //email
+          phone: userData.phone,               //users phone #
+          signature: userData.signature,       //users signature
+          ecSignature: userData.ecSignature,   //emergency contact signature
+          ecName: userData.ecName,             //emergency contact name
+          ecRel: userData.ecRelation,          //emergency contact relation
+          ecPhone: userData.ecPhone,           //emergency contact phone #
+          mailingList: userData.mls,           //mailing list sign-up
+          createdAt: new Date(),               //date user was added to the DB
+          updatedAt: new Date()                //most recent update to users profile
+      }).then(function(){
+          //New User added Successfully
+          return returnStatus;
+      }).catch(err => {
+          //An Error occured when trying to add a new user
+          return module.exports.errorHandling(err, returnStatus);
       });
     },
 
@@ -143,7 +148,7 @@ module.exports = {
     //NOTE:  This Method is still incomplete!  Only Use
     //       for testing purposes.
     deleteUser(bId){
-        return User.destroy({
+        return user.destroy({
             where: {
                 badge: bId
             }

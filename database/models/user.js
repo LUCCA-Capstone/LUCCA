@@ -1,50 +1,97 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  var User = sequelize.define('User', {
-    badge:
-        {
-          type: DataTypes.STRING,
-          allowNull: false,
-          primaryKey: true
-        },
-    firstName:
-        {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-    lastName:
-        {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-    status:
-        {
-          type: DataTypes.STRING,
-          allowNull: false
-        }
+  var user = sequelize.define('user', {
+      badge:
+          {
+              type: DataTypes.STRING,
+              primaryKey: true,
+              allowNull: false
+          },
+      first:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      last:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      email:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      phone:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      signature:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      ecSignature:
+          {
+              type: DataTypes.STRING,
+              defaultValue: false
+          },
+      ecName:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      ecRel:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      ecPhone:
+          {
+              type: DataTypes.STRING,
+              allowNull: false
+          },
+      status:
+          {
+              type: DataTypes.STRING,
+              defaultValue: 'User',
+              allowNull: false
+          },
+      confirmation:
+          {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+          },
+      password:
+          {
+              type: DataTypes.STRING,
+              defaultValue: null
+          },
+      mailingList:
+          {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+          },
+      createdAt:
+          {
+              type: DataTypes.DATE,
+              allowNull: false
+          },
+      updatedAt:
+          {
+              type: DataTypes.DATE,
+              allowNull: false
+          }
   });
 
-  User.associate = (models) => {
-      //add associations
-      User.hasMany(models.RegInfo,{
-         foreignKey: 'badge',
-         onDelete: 'CASCADE'
-      });
-
-      User.hasMany(models.Accounts, {
-          foreignKey: 'badge',
-          onDelete: 'CASCADE'
-      });
-
-        User.hasMany(models.Access, {
+    user.associate = (models) => {
+        //add associations
+        user.hasMany(models.privileges, {
             foreignKey: 'badge',
             onDelete: 'CASCADE'
         });
-
-        User.hasMany(models.Record, {
-           foreignKey: 'badge'
-        });
     };
 
-  return User;
+  return user;
 };
