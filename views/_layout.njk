@@ -22,13 +22,13 @@
 
       <!-- Temporary top navigation bar until permanent one is implemented -->
       {% block navbar %}
-        <nav class="navbar navbar-fixed-top navbar-expand-md navbar-dark bg-dark mb-4">
+        <nav class="navbar sticky-top navbar-expand-md navbar-dark bg-dark mb-4">
         <div class="container-fluid">
           <div class="navbar-header">
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand" href="#">LUCCA (config. brand?)</a>
+            <a class="navbar-brand" href="#">EPL WEB APP</a>
           </div> <!--navbar-header-->
 
           <!-- Collect the nav links and content for toggling -->
@@ -37,19 +37,19 @@
             <ul class="navbar-nav mr-auto">
               {% block Home %}
               <li class="nav-item">
-                <a class="nav-link" href="#">Home</a>
+                <a class="nav-link" href="/">Home</a>
               </li>
               {% endblock %}
 
               {% block Badgein %}
               <li class="nav-item">
-                <a class="nav-link" href="#">Badge-in</a>
+                <a class="nav-link" href="/badgein">Badge-in</a>
               </li>
               {% endblock %}
 
               {% block AdminLogin %}
               <li class="nav-item">
-                  <a class="nav-link" href="#">Admin Login</a>
+                  <a class="nav-link" href="/adminLogin">Admin Login</a>
               </li>
               {% endblock %}
 
