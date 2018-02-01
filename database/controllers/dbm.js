@@ -11,6 +11,7 @@
 const user = require('../models').user;
 const machine = require('../models').machine;
 const privileges = require('../models').privileges;
+const log = require('../models').log;
 const db = require('../models');
 const Op = db.Sequelize.Op;
 
@@ -373,20 +374,38 @@ module.exports = {
 
   //Usage:  Log's all database related events.
   //Arguments:
-  //         eventClass - Event Identifier (badge in, badge out, ...)
+  //         eventClass - Type of event (e.g. badge-in, internal server error)
   //         event      - Stringed description of the event
   //         date       - Date in which the event occurred.
   //Exceptions: ConnectionError, DatabaseError, QueryError,
   // ValidationError, Other
   //Description:  This function will record all interactivity between
   // the users and the database.  As well as all errors that occurred.
-  logEvent(eventClass, event, date) {
-    return true;
+  logEvent(eventClass, eventText, eventDate=undefined){
+    return db.sequelize.transaction(function (t){
+      var returnStatus = {result: true, detail: 'Success'};
+
+      //Adds a new row to the event table
+      return log.create({
+        eventClass: eventClass, // A string representing the sort of event (e.g. access, error, management, start-stop)
+        event: eventText, // The explanatory string describing the event (i.e. the text of the log entry)
+        createdAt: eventDate, // The date at which the event occured. If undefined, this should use the SQL
+                         //   schema 'DEFAULT now()' clause to set a current timestamp at the time it is written.
+      }, {transaction: t}).then(function (){
+        //Transaction completed
+        return returnStatus;
+      }).catch(error =>{
+        //Transaction incomplete -
+        //Error occurred when adding data to the
+        //Event table.
+        return module.exports.errorHandling(error, returnStatus);
+      });
+    });
   },
 
   //Usage:  Returns All, or some, events.
   //Arguments:
-  //         eventClass - Event Identifier (badge in, badge out, ...)
+  //         eventClass - Type of event (e.g. badge-in, internal server error)
   //         from       - Starting date
   //         to         - Ending date
   //Exceptions: ConnectionError, DatabaseError, QueryError,
@@ -396,7 +415,59 @@ module.exports = {
   // Additionally, this function will allow for requesting events
   // during a specific date range.  If both from and to are left undefined then all
   // results are returned.
-  getEvent(eventClass, from, to) {
-    return true;
+  getEvents(eventClass=undefined, from=undefined, to=undefined){
+    var queryParameters = {};
+    if (typeof(eventClass) != 'undefined') {
+      queryParameters["eventClass"] = eventClass;
+    }
+    if (typeof(from) != 'undefined' && typeof(to) != 'undefined') {
+      queryParameters["createdAt"] = {
+        [Op.gte] : from,
+        [Op.lte] : to
+      }
+    } else if (typeof(from) != 'undefined') {
+      queryParameters["createdAt"] = {
+        [Op.gte] : from
+      }
+    } else if (typeof(to) != 'undefined') {
+      queryParameters["createdAt"] = {
+        [Op.lte] : to
+      }
+    }
+    return db.sequelize.transaction(function (t){
+
+      // Fetches a list of logged events from the database
+      return log.findAll({
+        where: queryParameters
+      }, {transaction: t}).then(function(data){
+        //Transaction completed
+        return data;
+      }).catch(error =>{
+        //Transaction incomplete -
+        //Error occurred when adding data to the
+        //RegInfo table.
+        return module.exports.errorHandling(error);
+      });
+    });
   },
+
+  //Usage:  Returns All, or some, events.
+  //Arguments:
+  //         Id - Event identifier integer, as returned by getEvents
+  //Exceptions: ConnectionError, DatabaseError, QueryError,
+  // ValidationError, Other
+  //Description:  This function will delete an event with the specified
+  // ID, if it exists. It returns a status object.
+  deleteEvent(eventId){
+    console
+    return log.destroy({
+      where: {
+        Id: eventId
+      }
+    }).then(function(){
+      return {result: true, detail: 'Success'};
+    }).catch(err =>{
+      return {result: false, detail: err};
+    });
+  }
 }
