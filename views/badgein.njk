@@ -24,11 +24,13 @@
     {% endblock %}
 
     {% block content %}
+        <form action="/badgein" method="post">
         <h1>Please enter or scan badge</h1>
         <div class="center">
-            <input id="badge_number" placeholder="Enter Badge ID">
+          <input type="text" name="badgeNumber" placeholder="Enter Badge ID"required>
         </div>
-        <a href="#" class="btn btn-primary">Submit</a>
+        <button class="btn btn-primary" type="Submit">Submit</button>
+        </form>
     {% endblock %}
 
 
