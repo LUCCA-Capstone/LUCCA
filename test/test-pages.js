@@ -37,7 +37,7 @@ describe('Page status', function () {
 
   describe('User registration page', function() {
     it('status', function(done) {
-      request('http://localhost:3000/registration', function(error, response, body) {
+      request('http://localhost:3000/registration/00001', function(error, response, body) {
         expect(response.statusCode).to.equal(200);
         done();
       });
