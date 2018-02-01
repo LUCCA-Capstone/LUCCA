@@ -1,0 +1,21 @@
+{% extends '_layout.njk' %}
+
+{% block customCSS %}
+<link rel="stylesheet" href="stylesheets/adminLogin.css">
+{% endblock %}
+
+{% block content %}
+<form action="/adminRegister" method="POST">
+  <h2>Create an admin account for user</h2>
+    <div class="form-group">
+      <input name="email" type="createusername" class="form-control" placeholder="Enter email" style="width: 200px;">
+    </div>
+    <div class="form-group">
+      <input name="password" type="password" class="form-control" id="createpassword" placeholder="Enter Password" style="width: 200px;">
+    </div>
+    <div class="form-group">
+      <input name="reenterpassword" type="password" class="form-control" id="reenterpassword" placeholder="Re-enter Password" style="width: 200px;">
+    </div>
+  <button class="btn btn-primary" type="submit" role="button">Sign Up</button>
+</form>
+{% endblock %}
