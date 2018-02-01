@@ -20,9 +20,9 @@ module.exports = (sequelize, DataTypes) => {
     createdAt:
       {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: sequelize.fn('now')
       }
   });
-
   return log;
 };
