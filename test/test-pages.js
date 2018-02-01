@@ -84,4 +84,28 @@ describe('Page status', function () {
       });
     });
   });
+
+  describe('Admin create new account', function() {
+    it('status', function(done) {
+      request('/adminRegister',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
+
+  describe('Admin reset account', function() {
+    it('status', function(done) {
+      request('/adminReset',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
 });
