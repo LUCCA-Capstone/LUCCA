@@ -2,31 +2,31 @@ var chai = require('chai');
 var request = require('request');
 var assert = chai.assert;
 var expect = chai.expect;
-var controllers = require('./database/controllers/dbm');
+var controllers = require('../../database/controllers/dbm');
 
 var emptyData = {};
 
 var incompleteData = {
     "badge": null,
-    "firstName": "Rory",
-    "lastName": "Eats",
+    "first": "Rory",
+    "last": "Eats",
     "email": "123@gmail.com",
     "phone": "(555)555-5555",
     "signature": "Rory Eats",
     "ecName": "Hello HowareU",
-    "ecRelation": "Father",
+    "ecRel": "Father",
     "ecPhone": "(555)444-4444"
 };
 
 var trueData = {
     "badge": '9090909090',
-    "firstName": "Rory",
-    "lastName": "Eats",
+    "first": "Rory",
+    "last": "Eats",
     "email": "123@gmail.com",
     "phone": "(555)555-5555",
     "signature": "Rory Eats",
     "ecName": "Hello HowareU",
-    "ecRelation": "Father",
+    "ecRel": "Father",
     "ecPhone": "(555)444-4444"
 };
 
@@ -139,4 +139,40 @@ var endDate;
     controllers.getUsers(startDate, endDate).done(function(results, err){
         console.log(results);
     });*/
+
+    describe('modifyUser invalid badge id', function(){
+        it('Should not update and return status false', function(done){
+            controllers.modifyUser('fake badge id', {'password': 'fake'}).done(function(results){
+                expect(results.result).to.equal(false);
+                done();
+            });
+        });
+    });
+
+    describe('modifyUser + valid badge id + valid attribute field + null value', function(){
+        it('Should not update table attribute cannot be null, return status false', function(done){
+            controllers.modifyUser('1234567', {'first': null}).done(function(results){
+                expect(results.result).to.equal(false);
+                done();
+            });
+        });
+    });
+
+    describe('modifyUser + valid badge id + valid attribute field + null value', function(){
+        it('Should update table attribute can be null, return status true', function(done){
+            controllers.modifyUser('1234567', {'password': null}).done(function(results){
+                expect(results.result).to.equal(true);
+                done();
+            });
+        });
+    });
+
+    describe('modifyUser + valid badge id + valid attribute field + value', function(){
+        it('Should update table attribute, return status true', function(done){
+            controllers.modifyUser('1234567', {'password': 'fart'}).done(function(results){
+                expect(results.result).to.equal(true);
+                done();
+            });
+        });
+    });
 });
