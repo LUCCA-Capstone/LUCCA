@@ -2,6 +2,7 @@
 //Updated - 01-30-2018
 const user = require('../models').user;
 const db = require('../models');
+const Op = db.Sequelize.Op;
 
 /*
     This module will store all the methods for accessing/updating/removing
@@ -132,8 +133,20 @@ module.exports = {
     // ValidationError, Other
     //Description:  This function will tell the user-access API
     // whether or not a user has access to use a machine or not.
-    validateUser(sId, uId){
-      return true;
+    validateUser(uId){
+      if (uId === undefined) {
+        return undefined;
+      }
+
+      return user.findAll({
+        where: {
+          [Op.or]: [{email: uId}, {badge: uId}]
+        }
+      }).then(function(user){
+        return user[0];
+      }).catch(err => {
+        return undefined;
+      });;
     },
 
     //Usage: Remove a user from the DB
