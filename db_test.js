@@ -62,6 +62,33 @@ describe('DB TEST', function(){
         });
     });
 
+    describe('validateUser with badge', function(){
+      it('Return the userData object as specified by createUser input', function(done){
+        controllers.validateUser(trueData['badge']).done(function(results){
+          expect(results['badge']).to.equal(trueData['badge']);
+          done();
+        });
+      });
+    });
+
+    describe('validateUser with email', function(){
+      it('Return the userData object as specified by createUser input', function(done){
+        controllers.validateUser(trueData['email']).done(function(results){
+          expect(results['email']).to.equal(trueData['email']);
+          done();
+        });
+      });
+    });
+
+    describe('validateUser no user exists', function(){
+      it('Return undefined', function(done){
+        controllers.validateUser('U DONT EXIST').done(function(results){
+          expect(results).to.equal(undefined);
+          done();
+        });
+      });
+    });
+
     describe('createUser primary Key violation', function(){
         it('Same complete data should cause primary key fail', function(done){
             controllers.createUser(trueData).done(function(results){
