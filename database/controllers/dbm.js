@@ -90,16 +90,16 @@ module.exports = {
 
       return user.create({
           badge: userData.badge,               //badge#
-          first: userData.firstName,           //first name
-          last: userData.lastName,             //last name
+          first: userData.first,           //first name
+          last: userData.last,             //last name
           email: userData.email,               //email
           phone: userData.phone,               //users phone #
           signature: userData.signature,       //users signature
           ecSignature: userData.ecSignature,   //emergency contact signature
           ecName: userData.ecName,             //emergency contact name
-          ecRel: userData.ecRelation,          //emergency contact relation
+          ecRel: userData.ecRel,          //emergency contact relation
           ecPhone: userData.ecPhone,           //emergency contact phone #
-          mailingList: userData.mls,           //mailing list sign-up
+          mailingList: userData.mailingList,           //mailing list sign-up
           createdAt: new Date(),               //date user was added to the DB
           updatedAt: new Date()                //most recent update to users profile
       }).then(function(){
@@ -122,7 +122,19 @@ module.exports = {
     // all attributes in the DB from the attributes from the userData
     // argument.
     modifyUser(bId, userData){
-        return true;
+        var returnStatus = {result: true, detail: 'Success'};
+        return user.update(userData, {where: {badge: bId}}).then(results => {
+            //console.log(results[0]);
+            if(results[0] === 1){
+                return returnStatus;
+            }else{
+                returnStatus.result = false;
+                returnStatus.detail = 'Invalid Data';
+                return returnStatus;
+            }
+        }).catch(err => {
+            return module.exports.errorHandling(err, returnStatus);
+        });
     },
 
     //Usage: Determines if a User can or cannot use a station
