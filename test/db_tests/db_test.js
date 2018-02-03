@@ -32,9 +32,9 @@ var trueData = {
 
 describe('DB TEST', function(){
 
-    /*
+/*
     -------------createUser Tests-------------
-    */
+*/
     describe('createUser Empty Dataset', function(){
        it('Empty JSON object Should Cause Fail', function(done){
            controllers.createUser(emptyData).done(function(results){
@@ -109,36 +109,66 @@ describe('DB TEST', function(){
 
 /*
     -------------getUsers Tests-------------
-    --Note: Mocha did not like undefined variables being passed as arguments
-    --Uncomment to see results.
 */
 
-/*
+
 var startDate;
 var endDate;
-    //Should return full list
-    controllers.getUsers(startDate, endDate).done(function(results, err){
-        console.log(results);
+
+    describe('getUser + two undefined dates', function(){
+        it('Should return full set of users', function(done){
+            controllers.getUsers(startDate, endDate).done(function(results){
+                //console.log(results);
+                expect(results).to.have.length.above(1);
+                //expect(results.result).to.equal(true);
+                done();
+                startDate = '2000-01-01';
+            });
+        });
     });
 
-    //Should Return False
-    startDate = '2000-01-01';
-    controllers.getUsers(startDate, endDate).done(function(results, err){
-        console.log(results);
+    describe('getUser + one undefined date', function(){
+        it('Should return false', function(done){
+            controllers.getUsers(startDate, endDate).done(function(results){
+                expect(results).to.equal(false);
+                done();
+                endDate = '2000-01-02'
+            });
+        });
     });
 
-    //Should Return empty
-    endDate = '2000-01-02';
-    controllers.getUsers(startDate, endDate).done(function(results, err){
-        console.log(results);
+    describe('getUser + two dates + out of range', function(){
+        it('Should return empty set of data', function(done){
+            controllers.getUsers(startDate, endDate).done(function(results){
+                expect(results).to.have.length(0);
+                done();
+                startDate = '2018-02-02';
+                endDate = '2018-02-04';
+            });
+        });
     });
 
-    //Should Return subset of data
-    startDate = '2018-02-02'
-    endDate = '2018-02-03';
-    controllers.getUsers(startDate, endDate).done(function(results, err){
-        console.log(results);
-    });*/
+    describe('getUser + two dates + in range', function(){
+        it('Should return subset of data', function(done){
+            controllers.getUsers(startDate, endDate).done(function(results){
+                expect(results).to.have.length.above(0);
+                done();
+            });
+        });
+    });
+
+/*
+     -------------Note-------------
+     Please Write any new tests above the modifyUser Tests
+     as the last modifyUser test calls the process.exit() command
+     to close DB connection.
+
+     Thanks!
+ */
+
+/*
+    -------------modifyUser Tests-------------
+*/
 
     describe('modifyUser invalid badge id', function(){
         it('Should not update and return status false', function(done){
@@ -150,7 +180,7 @@ var endDate;
     });
 
     describe('modifyUser + valid badge id + valid attribute field + null value', function(){
-        it('Should not update table attribute cannot be null, return status false', function(done){
+        it('Should not update table.  Desired update attribute cannot be null.  Return status false', function(done){
             controllers.modifyUser('1234567', {'first': null}).done(function(results){
                 expect(results.result).to.equal(false);
                 done();
@@ -159,7 +189,7 @@ var endDate;
     });
 
     describe('modifyUser + valid badge id + valid attribute field + null value', function(){
-        it('Should update table attribute can be null, return status true', function(done){
+        it('Should update table.  Desired attribute can be null.  Return status true', function(done){
             controllers.modifyUser('1234567', {'password': null}).done(function(results){
                 expect(results.result).to.equal(true);
                 done();
@@ -172,6 +202,16 @@ var endDate;
             controllers.modifyUser('1234567', {'password': 'fart'}).done(function(results){
                 expect(results.result).to.equal(true);
                 done();
+            });
+        });
+    });
+
+    describe('modifyUser + valid badge id + invalid attribute field', function(){
+        it('Should not update table attribute.  Return status true', function(done){
+            controllers.modifyUser('1234567', {'passowrd': 'lalala'}).done(function(results){
+                expect(results.result).to.equal(true);
+                done();
+                process.exit();
             });
         });
     });

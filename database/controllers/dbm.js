@@ -1,12 +1,20 @@
-//Bryan Mikkelson, 01-28-2018, LUCCA Project
-//Updated - 01-30-2018
+//LUCCA Project - 01-28-2018
+//Updated Last  - 02-03-2018
+//           By - Bryan Mikkelson
+//
+//Contributors  -
+//                Andy Wood,
+//                Bryan Mikkelson,
+//                Daniel Eynis
+//
+
 const user = require('../models').user;
 const db = require('../models');
 const Op = db.Sequelize.Op;
 
 /*
     This module will store all the methods for accessing/updating/removing
-    user data in the database.
+    user, machine, privileges, and log data in the DB.
  */
 module.exports = {
 
@@ -86,27 +94,27 @@ module.exports = {
     //Description:  This function will take as argument a JSON object
     // with all required user data and then store that data in a backend DB.
     createUser(userData){
-      var returnStatus = {result: true, detail: 'Success'};
+      var returnStatus = {result: true, detail: 'Success'};  //Status Code
 
       return user.create({
           badge: userData.badge,               //badge#
-          first: userData.first,           //first name
-          last: userData.last,             //last name
+          first: userData.first,               //first name
+          last: userData.last,                 //last name
           email: userData.email,               //email
           phone: userData.phone,               //users phone #
           signature: userData.signature,       //users signature
           ecSignature: userData.ecSignature,   //emergency contact signature
           ecName: userData.ecName,             //emergency contact name
-          ecRel: userData.ecRel,          //emergency contact relation
+          ecRel: userData.ecRel,               //emergency contact relation
           ecPhone: userData.ecPhone,           //emergency contact phone #
-          mailingList: userData.mailingList,           //mailing list sign-up
+          mailingList: userData.mailingList,   //mailing list sign-up
           createdAt: new Date(),               //date user was added to the DB
           updatedAt: new Date()                //most recent update to users profile
       }).then(function(){
           //New User added Successfully
           return returnStatus;
       }).catch(err => {
-          //An Error occured when trying to add a new user
+          //An Error occurred when trying to add a new user
           return module.exports.errorHandling(err, returnStatus);
       });
     },
@@ -117,14 +125,20 @@ module.exports = {
     //          userData - Attribute(s) to be modified
     //Exceptions: ConnectionError, DatabaseError, QueryError,
     // ValidationError, Other
-    //Description:  This function will first query the DB to find
-    // the user based off their badge id.  It will then update
-    // all attributes in the DB from the attributes from the userData
-    // argument.
+    //Description:  This function will update the desired attributes
+    //of a user based of the JSON userData object.  The user will be
+    //identified by their bId.
     modifyUser(bId, userData){
-        var returnStatus = {result: true, detail: 'Success'};
+        var returnStatus = {result: true, detail: 'Success'};        //Status Code
+
+        //Update all attributes passed in the userData object where the
+        //users badge # = bId
         return user.update(userData, {where: {badge: bId}}).then(results => {
-            //console.log(results[0]);
+
+            //If the query executed without error or restriction
+            //the results will always be 1, true.  Otherwise,
+            //The results are either DB error related or invalid
+            //data.
             if(results[0] === 1){
                 return returnStatus;
             }else{
