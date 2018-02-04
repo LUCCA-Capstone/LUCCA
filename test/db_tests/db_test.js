@@ -143,7 +143,7 @@ var endDate;
                 expect(results).to.have.length(0);
                 done();
                 startDate = '2018-02-02';
-                endDate = '2018-02-04';
+                endDate = '3000-02-04';
             });
         });
     });
@@ -153,6 +153,74 @@ var endDate;
             controllers.getUsers(startDate, endDate).done(function(results){
                 expect(results).to.have.length.above(0);
                 done();
+            });
+        });
+    });
+
+/*
+    -------------getUsers Tests-------------
+*/
+
+    //Should return full list of stations - both registered and unregistered
+    describe('GetStations: ALL', function(){
+        it('Return all stations (currently 6)', function(done){
+        controllers.getStations().then(function(results){
+            expect(results).to.have.length.above(3);
+            done();
+            });
+        });
+    });
+
+    //Should return list of registered stations only
+    describe('GetStations: true', function(){
+        it('Return REGISTERED stations (currently 3)', function(done){
+        controllers.getStations(true).then(function(results){
+            expect(results).to.have.length.above(1);
+            done();
+            });
+        });
+    });
+
+    //Should return list of registered stations only
+    describe('GetStations: specific (registered)', function(){
+        it('Verify a station known to be registered is returned ("WOOOOOO")', function(done){
+        controllers.getStations(true).then(function(results){
+            var containsWOOOOOO = false;
+            //look for the name of a station that is known to be registered 
+            results.forEach(element => {
+                if (element.name === "WOOOOOO") {
+                    containsWOOOOOO = true;
+                };
+            });
+            expect(containsWOOOOOO).to.equal(true);
+            done();
+            });
+        });
+    });
+
+    //Should return only stations that are NOT registered
+    describe('GetStations: false', function(){
+        it('Return UNREGISTERED stations (currently 3)', function(done){
+        controllers.getStations(false).then(function(results){
+            expect(results).to.have.length.above(1);
+            done();
+            });
+        });
+    });
+
+    //Should return list of registered stations only
+    describe('GetStations: specific (unregistered)', function(){
+        it('Verify a station known to be UNREGISTERED is returned ("Hacksaw")', function(done){
+        controllers.getStations(false).then(function(results){
+            var containsHacksaw = false;
+            //look for the name of a station that is known to be registered 
+            results.forEach(element => {
+                if (element.name === "Hacksaw") {
+                    containsHacksaw = true;
+                };
+            });
+            expect(containsHacksaw).to.equal(true);
+            done();
             });
         });
     });
