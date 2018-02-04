@@ -33,7 +33,7 @@ var trueData = {
 describe('DB TEST', function(){
 
 /*
-    -------------createUser Tests-------------
+    -------------createUser/validateUser Tests-------------
 */
     describe('createUser Empty Dataset', function(){
        it('Empty JSON object Should Cause Fail', function(done){
@@ -226,13 +226,67 @@ var endDate;
     });
 
 /*
-     -------------Note-------------
-     Please Write any new tests above the modifyUser Tests
-     as the last modifyUser test calls the process.exit() command
-     to close DB connection.
+    -------------getPrivileges Tests-------------
+*/
+  describe('getPrivileges invalid badge id', function(){
+    it('Should return false', function(done){
+      controllers.getPrivileges('fake badge id').then(results => {
+        expect(results).to.equal(false);
+        done();
+      }).catch(err => {
+        console.log(err);
+        done();
+      });
+    });
+  });
 
-     Thanks!
- */
+  describe('getPrivileges valid badge id', function(){
+    it('Should return results', function(done){
+      controllers.getPrivileges('1234567').then(results => {
+        expect(results).to.have.length.above(0);
+        done();
+      }).catch(err => {
+        console.log(err);
+        done();
+      });
+    });
+  });
+
+  describe('getPrivileges empty string id', function(){
+    it('Should return false', function(done){
+      controllers.getPrivileges('').then(results => {
+        expect(results).to.equal(false);
+        done();
+      }).catch(err => {
+        console.log(err);
+        done();
+      });
+    });
+  });
+
+  describe('getPrivileges null string', function(){
+    it('Should return false', function(done){
+      controllers.getPrivileges(null).then(results => {
+        expect(results).to.equal(false);
+        done();
+      }).catch(err => {
+        console.log(err);
+        done();
+      });
+    });
+  });
+
+  describe('getPrivileges undefined string', function(){
+    it('Should return false', function(done){
+      controllers.getPrivileges().then(results => {
+        expect(results).to.equal(false);
+        done();
+      }).catch(err => {
+        console.log(err);
+        done();
+      });
+    });
+  });
 
 /*
     -------------modifyUser Tests-------------
@@ -279,7 +333,6 @@ var endDate;
             controllers.modifyUser('1234567', {'passowrd': 'lalala'}).done(function(results){
                 expect(results.result).to.equal(true);
                 done();
-                process.exit();
             });
         });
     });
