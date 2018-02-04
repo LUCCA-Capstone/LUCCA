@@ -1,5 +1,5 @@
 //LUCCA Project - 01-28-2018
-//Updated Last  - 02-03-2018
+//Updated Last  - 02-04-2018
 //           By - Bryan Mikkelson
 //
 //Contributors  -
@@ -10,6 +10,7 @@
 "use strict";
 const user = require('../models').user;
 const machine = require('../models').machine;
+const privileges = require('../models').privileges;
 const db = require('../models');
 const Op = db.Sequelize.Op;
 
@@ -199,17 +200,27 @@ module.exports = {
         });
     },
 
-    //Usage:  Return's a JSON Object of all stations a user has access to.
-    //Arguments:
-    //          bId - The badge id for the user
-    //Exceptions: ConnectionError, DatabaseError, QueryError,
-    // ValidationError, Other
-    //Descriptions:  This function will take a user's badge # and return
-    // a JSON object with all the stations the user has been trained on and
-    // can use.
-    getPrivileges(bId) {
-        return true;
-    },
+  //Usage:  Return's a JSON Object of all stations a user has access to.
+  //Arguments:
+  //          bId - The badge id for the user
+  //Exceptions: ConnectionError, DatabaseError, QueryError,
+  // ValidationError, Other
+  //Descriptions:  This function will take a user's badge # and return
+  // a JSON object with all the stations the user has been trained on and
+  // can use.
+  getPrivileges(bId){
+      return privileges.findAll({
+        where: {badge: bId},
+        raw: true
+        }).then(results => {
+        if(results.length < 1)
+          return false;
+        else
+          return results;
+        }).catch(err => {
+          return false;
+        });
+  },
 
     //Usage:  Update's a users account to grant access to a station
     //Arguments:
