@@ -75,4 +75,20 @@ router.post('/badgein', jsonParser, function (req, res) {
 
 });
 
+
+router.get('/userManagement', function(req, res) {
+  console.log(req.body)
+  
+
+  var jsonParser = dbAPI.getUsers('2000-01-01', '3000-01-01').done(function(ret){
+    // res.render('userManagement.njk', {obj: JSON.stringify(ret)});
+    res.render('userManagement.njk', {obj: ret});
+    console.log(ret)
+  })
+
+
+  
+});
+
 module.exports = router;
+
