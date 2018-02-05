@@ -1,0 +1,65 @@
+{% extends '_layout.njk' %}
+
+{% block description %}
+<meta name="description" content="User Management for admin">
+{% endblock %}
+
+{% block title %}
+<title>LUCCA User Management</title>
+{% endblock %}
+
+{% block customCSS %}
+<link rel="stylesheet" href="/stylesheets/userManagement.css">
+{% endblock %}
+
+{% block adminManagement %}
+<!-- Hide admin buttons (we'll add logic to handle this here later) -->
+{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+    <div class="panel panel-default user_panel">
+        <div class="panel-heading">
+            <h3 class="panel-title"><center>User Management Page</center></h3>
+        </div>
+    </div>
+   <br />
+	<form id="searchthis" action="/search" style="display:inline;" method="get">
+        <input id="namanyay-search-box" name="q" size="40" type="text" placeholder="Search User/Report Here"/>
+        <input id="namanyay-search-btn" value="Go" type="submit"/>
+    </form> 
+    <br />
+
+    <div class="row">
+        <div class="panel panel-default user_panel">
+            <div class="panel-heading">
+                <h3 class="panel-title">User List</h3>
+            </div>
+           
+        </div>
+</form>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Badge Number</th>
+            <th scope="col">Validated</th>
+            <th scope="col">Edit</th>
+            </tr>
+    </thead>
+
+    {% for item in obj %}
+        <tr>
+            <td>{{item.first}} {{item.last}}</td>
+            <td>{{item.badge}}</td>
+            <td>{{item.confirmation}}</td>
+            <td><a href="#">User</a> <a href="#">Station</a> </td> 
+        </tr>
+    {% endfor %}   
+</table>
+
+
+{% endblock %}
