@@ -16,8 +16,9 @@ module.exports = {
         type: Sequelize.STRING
       },
       email: {
-          allowNull: false,
-          type: Sequelize.STRING
+        allowNull: false,
+        unique: true,
+        type: Sequelize.STRING
       },
       phone: {
         allowNull: false,
@@ -44,13 +45,13 @@ module.exports = {
         type: Sequelize.STRING
       },
       status: {
-          allowNull: false,
-          defaultValue: 'User',
-          type: Sequelize.STRING
+        allowNull: false,
+        defaultValue: 'User',
+        type: Sequelize.STRING
         },
       confirmation: {
-          defualtValue: false,
-          type: Sequelize.BOOLEAN
+        defualtValue: false,
+        type: Sequelize.BOOLEAN
       },
       password: {
         defaultValue: null,
