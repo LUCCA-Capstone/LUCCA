@@ -28,9 +28,6 @@ module.exports = {
                 key: 'sId'
             }
       },
-      trained: {
-        type: Sequelize.BOOLEAN
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
