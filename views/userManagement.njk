@@ -18,27 +18,27 @@
 
 {% block content %}
 
-<form method="POST">
     <div class="panel panel-default user_panel">
         <div class="panel-heading">
             <h3 class="panel-title"><center>User Management Page</center></h3>
         </div>
     </div>
    <br />
-	<form id="searchthis" action="/search" style="display:inline;" method="get">
+
+	<form id="searchthis" action="/search" style="display:inline;" method="POST">
         <input id="namanyay-search-box" name="q" size="40" type="text" placeholder="Search User/Report Here"/>
         <input id="namanyay-search-btn" value="Go" type="submit"/>
     </form> 
-    <br />
+    <br /><br />
 
     <div class="row">
         <div class="panel panel-default user_panel">
             <div class="panel-heading">
                 <h3 class="panel-title">User List</h3>
             </div>
-           
         </div>
-</form>
+    </div>
+    
 
 
 <table class="table">
@@ -60,6 +60,5 @@
         </tr>
     {% endfor %}   
 </table>
-
 
 {% endblock %}
