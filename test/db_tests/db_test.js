@@ -5,7 +5,6 @@ var expect = chai.expect;
 var controllers = require('../../database/controllers/dbm');
 var db = require('../../database/models');
 
-
 var emptyData = {};
 
 var incompleteData = {
@@ -22,6 +21,18 @@ var incompleteData = {
 
 var trueData = {
   "badge": '9090909090',
+  "first": "Rory",
+  "last": "Eats",
+  "email": "123@gmail.com",
+  "phone": "(555)555-5555",
+  "signature": "Rory Eats",
+  "ecName": "Hello HowareU",
+  "ecRel": "Father",
+  "ecPhone": "(555)444-4444"
+};
+
+var trueData2 = {
+  "badge": '8674848400101',
   "first": "Rory",
   "last": "Eats",
   "email": "123@gmail.com",
@@ -184,6 +195,15 @@ describe('DB TEST', function () {
   describe('createUser primary Key violation', function () {
     it('Same complete data should cause primary key fail', function (done) {
       controllers.createUser(trueData).done(function (results) {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+  });
+
+  describe('createUser unique email constraint', function () {
+    it('Should cause unique key fail', function (done) {
+      controllers.createUser(trueData2).done(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
