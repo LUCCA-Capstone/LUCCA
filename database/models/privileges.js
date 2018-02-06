@@ -17,10 +17,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
-    trained:
-      {
-        type: DataTypes.BOOLEAN
-      },
     createdAt:
       {
         type: DataTypes.DATE,
