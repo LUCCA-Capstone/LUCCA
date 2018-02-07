@@ -570,4 +570,119 @@ describe('DB TEST', function () {
       });
     });
   });
+
+  /*
+      -------------grantPrivileges Tests-------------
+  */
+  describe('grantPrivileges Tests', function (){
+    it('Grant new privileges + null badge id, will fail and return false', function(done){
+      controllers.grantPrivileges(null, '3').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Grant new privileges + null station id, will fail and return false', function(done){
+      controllers.grantPrivileges('1234567', null).then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Grant new privileges + undefined arguments will fail and return false', function(done){
+      controllers.grantPrivileges().then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Grant new privileges + badge ID not in user table will fail and return false', function(done){
+      controllers.grantPrivileges('This is a test', '3').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Grant new privileges + station ID not in machines table will fail and return false', function(done){
+      controllers.grantPrivileges('1234567', '400').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Grant new privileges + badge/station ID in users/machines table will succeed and return true', function(done){
+      controllers.grantPrivileges('1234567', '3').then(results => {
+        expect(results.result).to.equal(true);
+        done();
+      });
+    });
+  });
+
+  /*
+     -----------removePrivileges Tests-----------------
+   */
+  describe('removePrivileges Tests', function () {
+    it('Should grant privilege to a user.  Return status true', function (done) {
+      controllers.grantPrivileges('1234567', '3').then(results => {
+        expect(results.result).to.equal(true);
+        done();
+      });
+    });
+
+    it('Should return false with empty badge id + valid station', function (done) {
+      controllers.removePrivileges('', '3').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with null badge id + valid station', function (done) {
+      controllers.removePrivileges(null, '3').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with invalid badge id + valid station', function (done) {
+      controllers.removePrivileges('fake bade id yo', '3').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with valid badge id + empty station', function (done) {
+      controllers.removePrivileges('1234567', '').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with valid badge id + null station', function (done) {
+      controllers.removePrivileges('1234567', null).then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with valid badge id + invalid station', function (done) {
+      controllers.removePrivileges('1234567', 'fake station id yo').then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return false with undefined arguments', function (done) {
+      controllers.removePrivileges().then(results => {
+        expect(results.result).to.equal(false);
+        done();
+      });
+    });
+
+    it('Should return true valid badge + valid station', function (done) {
+      controllers.removePrivileges('1234567', '3').then(results => {
+        expect(results.result).to.equal(true);
+        done();
+      });
+    });
+  });
 });
