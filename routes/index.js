@@ -83,5 +83,13 @@ router.get('/userManagement', function(req, res) {
   })
 });
 
-module.exports = router;
+router.post('/userManagement', function(req, res) {
+  dbAPI.validateUser(req.body.userInput).then(function(ret){
+    console.log(ret.dataValues);
+    res.render('userManagement.njk', {obj: [ret.dataValues]});
+  })
+});
 
+
+
+module.exports = router;
