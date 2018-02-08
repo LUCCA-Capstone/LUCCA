@@ -1,4 +1,5 @@
 var express = require('express');
+var db = require('../database/controllers/dbm');
 var router = express.Router();
 
 // log request
@@ -25,4 +26,43 @@ router.post('/user-access', function(req, res) {
     }        
 });
 
+router.post('/station-heartbeat', function(req, res) {
+	var headerObj = req.headers;
+	if('sid' in headerObj) {
+		var stationId = headerObj['sid'];
+		db.getStation(stationId).then(function(station) {
+			if(station) {
+				res.set({
+					'Content-Type': 'text/plain',
+					'Date': new Date().toString()
+				});
+				res.sendStatus(200);
+			} else {
+				var newStation = {
+					sId: stationId,
+					name: 'none',
+					description: 'none',
+					registered: false
+				};
+				db.createStation(newStation).then(function(result) {
+					if(result) {
+						res.set({
+							'Content-Type': 'text/plain',
+							'Date': new Date().toString()
+						});
+						res.sendStatus(200);
+					}
+				}).catch((error) => {
+					//Internal error in database
+					res.sendStatus('Database error', error);
+				});
+			}
+		}).catch((error) => {
+			//Internal error in database
+			res.sendStatus('Database error', error);
+		});
+	} else {
+		res.sendStatus(403);
+	}
+})
 module.exports = router;
