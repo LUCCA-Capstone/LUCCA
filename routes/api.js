@@ -1,4 +1,5 @@
 var express = require('express');
+var db = require('../database/controllers/dbm');
 var router = express.Router();
 
 // log request
@@ -25,4 +26,48 @@ router.post('/user-access', function(req, res) {
     }        
 });
 
+
+router.post('/station-heartbeat', function(req, res) {
+	var headerObj = req.headers;
+	if('sid' in headerObj){
+		var stationID = headerObj['sid'];
+		db.getStation(stationID).then(function(station) {
+			if(station) {
+				res.set({
+					'Content-Type': 'text/plain',
+					'Date': new Date().toString()
+				});
+				res.sendStatus(200).end();
+			} else {
+				var newStation = {
+					sId: stationID,
+					name: 'none',
+					description: 'none',
+					registered: false
+				};
+				db.createStation(newStation).then(function(result) {
+					if(result){
+						res.set({
+							'Content-Type': 'text/plain',
+							'Date': new Date().toString()
+						});
+						res.sendStatus(200).end()
+					} else {
+						//Internal Error in datbase
+						res.send('Database error', error);
+					}		
+				}).catch(function(error) {
+					//Internal Error in database
+					res.send('Database error', error);
+				});
+			}
+		}).catch(function(error) {
+			//Internal Error in database
+			res.send('Database error', error);
+		});
+	} else {
+		// There was no sid attached to http header
+		res.sendStatus(403);
+	}; 
+});
 module.exports = router;
