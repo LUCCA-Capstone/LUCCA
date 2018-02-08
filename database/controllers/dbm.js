@@ -229,10 +229,20 @@ module.exports = {
   //         sId -  The station id
   //Exceptions: ConnectionError, DatabaseError, QueryError,
   // ValidationError, Other
-  //Description:  This function will update a user's
-  // station privileges to 'trained'
+  //Description:  This function will grant a user's
+  // machine usage privileges.
   grantPrivileges(bId, sId) {
-    return true;
+    var returnStatus = { result: true, detail: 'Success' };
+    return privileges.create({
+      badge: bId,
+      sId: sId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+      }).then(() => {
+        return returnStatus;
+      }).catch(err => {
+        return module.exports.errorHandling(err, returnStatus);
+    });
   },
 
   //Usage:  Update's a users account to remove access to a station
