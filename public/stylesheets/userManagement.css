@@ -1,4 +1,4 @@
-#namanyay-search-btn {
+#searchBtn {
     background:#0099ff;
     color:white;
     font: 'trebuchet ms', trebuchet;
@@ -11,7 +11,7 @@
     font-weight:bold;
     }
      
-    #namanyay-search-box {
+#searchBox {
     background: #eee;
     padding:10px;
      border-radius:5px 0 0 5px;
@@ -21,3 +21,4 @@
     border:0 none;
     width:400px;
 }
+

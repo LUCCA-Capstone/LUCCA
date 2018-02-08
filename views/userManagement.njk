@@ -18,27 +18,27 @@
 
 {% block content %}
 
+
+<div class="panel panel-default user_panel">
+    <div class="panel-heading">
+        <h3 class="panel-title"><center>User Management Page</center></h3>
+    </div>
+</div>
+<br />
+<form id="searchForm" style="display:inline;" method="post">
+    <input id="searchBox" name="userInput" size="40" type="text" placeholder="Search User (by Badge ID or Email) Here"/>
+    <input id="searchBtn" value="Go" type="submit"/>
+</form> 
+<br /><br />
+
+<div class="row">
     <div class="panel panel-default user_panel">
         <div class="panel-heading">
-            <h3 class="panel-title"><center>User Management Page</center></h3>
-        </div>
+            <h3 class="panel-title">User List</h3>
+        </div>         
     </div>
-   <br />
+</div>
 
-	<form id="searchthis" action="/search" style="display:inline;" method="POST">
-        <input id="namanyay-search-box" name="q" size="40" type="text" placeholder="Search User/Report Here"/>
-        <input id="namanyay-search-btn" value="Go" type="submit"/>
-    </form> 
-    <br /><br />
-
-    <div class="row">
-        <div class="panel panel-default user_panel">
-            <div class="panel-heading">
-                <h3 class="panel-title">User List</h3>
-            </div>
-        </div>
-    </div>
-    
 
 
 <table class="table">
@@ -60,5 +60,6 @@
         </tr>
     {% endfor %}   
 </table>
+
 
 {% endblock %}
