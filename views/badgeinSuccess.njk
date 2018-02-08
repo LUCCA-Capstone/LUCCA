@@ -1,0 +1,31 @@
+{% extends '_layout.njk' %}
+
+    {% block description %}
+    <meta name="description" content="a page appeared for the user when the badge in success.">
+    {% endblock %}
+
+    {% block title %}
+    <title>Badge In Success</title>
+    {% endblock %}
+
+    <!-- Custom styles for this template -->
+    {% block customCSS %}
+    <link rel="stylesheet" href="stylesheets/badgeinSuccess.css">
+    {% endblock %}
+
+    {% block adminManagement %}
+    <!-- Hide admin buttons (we'll add logic to handle this here later) -->
+    {% endblock %}
+
+    {% block content %}
+        <form action="/badgeinSuccess" method="post">
+        <div class="alert alert-success">
+         <strong> Badge In Success</strong>
+        </div>
+        <h1>Please  Enter   OK </h1>
+        <button class="btn btn-primary" type="Submit">OK</button>
+        </form>
+    {% endblock %}
+
+
+

@@ -67,8 +67,8 @@ router.post('/badgein', jsonParser, function (req, res) {
       console.log('You logged in succesfully');
       console.log(BadgeNumber);
 
-      // popup message will apear here 
-      res.redirect('/badgein');
+      // go the badge in success page 
+      res.redirect('/badgeinSuccess');
     }
 
   });
@@ -76,20 +76,27 @@ router.post('/badgein', jsonParser, function (req, res) {
 });
 
 
-router.get('/userManagement', function(req, res) {
-  dbAPI.getUsers('2000-01-01', '3000-01-01').then(function(ret){
+router.get('/userManagement', function (req, res) {
+  dbAPI.getUsers('2000-01-01', '3000-01-01').then(function (ret) {
     // res.render('userManagement.njk', {obj: JSON.stringify(ret)});
-    res.render('userManagement.njk', {obj: ret});
+    res.render('userManagement.njk', { obj: ret });
   })
 });
 
-router.post('/userManagement', function(req, res) {
-  dbAPI.validateUser(req.body.userInput).then(function(ret){
+router.post('/userManagement', function (req, res) {
+  dbAPI.validateUser(req.body.userInput).then(function (ret) {
     console.log(ret.dataValues);
-    res.render('userManagement.njk', {obj: [ret.dataValues]});
+    res.render('userManagement.njk', { obj: [ret.dataValues] });
   })
 });
 
-
-
+router.get('/badgeinSuccess', function (req, res) {
+  res.render('badgeinSuccess.njk');
+});
+router.post('/badgeinSuccess', jsonParser, function (req, res) {
+  if (!req.body) {
+    return res.sendStatus(400);
+  }
+  res.redirect('/badgein');
+});
 module.exports = router;
