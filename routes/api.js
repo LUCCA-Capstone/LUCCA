@@ -37,25 +37,25 @@ router.post('/station-heartbeat', function(req, res) {
 					'Date': new Date().toString()
 				});
 				res.sendStatus(200);
-			} else {
-				var newStation = {
-					sId: stationId,
-					name: 'none',
-					description: 'none',
-					registered: false
-				};
-				db.createStation(newStation).then(function(result) {
-					if(result) {
-						res.set({
-							'Content-Type': 'text/plain',
-							'Date': new Date().toString()
-						});
-						res.sendStatus(200);
-					}
-				}).catch((error) => {
-					//Internal error in database
-					res.sendStatus('Database error', error);
+	} else {
+		var newStation = {
+			sId: stationId,
+			name: 'none',
+			description: 'none',
+			registered: false
+		};
+		db.createStation(newStation).then(function(result) {
+			if(result) {
+				res.set({
+					'Content-Type': 'text/plain',
+					'Date': new Date().toString()
 				});
+				res.sendStatus(200);
+			}
+			}).catch((error) => {
+			//Internal error in database
+				res.sendStatus('Database error', error);
+			});
 			}
 		}).catch((error) => {
 			//Internal error in database
