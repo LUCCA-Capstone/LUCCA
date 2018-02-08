@@ -43,4 +43,22 @@ describe('Page status', function () {
       });
     });
   });
+  describe('Badge-in Success page', function() {
+    it('status', function(done) {
+      request('http://localhost:3000/badgeinSuccess', function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
+  describe('User Management page', function() {
+    it('status', function(done) {
+      request('http://localhost:3000/userManagement', function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
 });
