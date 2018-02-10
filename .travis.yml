@@ -8,4 +8,4 @@ before_script:
   - chmod 0777 ./node_modules/.bin/mocha
   - npm start &
   - sleep 3
-  - python ./test/bin/station-sim.py3 -c localhost:3000 -U --no-certificate --no-verify
+  - python test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access
