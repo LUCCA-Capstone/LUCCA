@@ -299,6 +299,9 @@ if __name__ == '__main__':
   action_parser.add_argument('-A', '--action-type', dest='action', choices=['user-access', 'local-reset', 'last-state', 'station-heartbeat'])
   args = parser.parse_args()
 
+  if not args.verify:
+      import urllib3
+      urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
   if do_action[args.action](**vars(args)):
       print("Valid response received.")
       sys.exit(0)

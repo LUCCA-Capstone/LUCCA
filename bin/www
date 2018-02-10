@@ -8,6 +8,7 @@ var fs = require('fs')
  */
 
 var app = require('../app');
+var api_app = require('../api_app');
 var debug = require('debug')('lucca:server');
 var https = require('https');
 
@@ -27,8 +28,6 @@ app.set('port', port);
 
 var server = https.createServer({
     'pfx': fs.readFileSync(config.get('Server', 'pkcs_cert_file')),
-    'requestCert': config.get('Server', 'require_client_certificates') == 'false' ? false : true,
-    'rejectUnauthorized': config.get('Server', 'require_client_certificates') == 'false' ? false : true
   }, app);
 
 /**
@@ -101,6 +100,8 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
+///////////////////////////////////////////////////////
+
 if( config.get('Server', 'redirect_port_80') != "no" ){
   var http = require('http');
   var http_redirector = http.createServer(
@@ -109,5 +110,71 @@ if( config.get('Server', 'redirect_port_80') != "no" ){
       res.end();
     }
   ).listen(8080);
+
+///////////////////////////////////////////////////////
+
+var api_bind_addr = process.env.API_BIND_ADDRESS || config.get('API', 'bind_address') || '0.0.0.0';
+api_app.set('bind_addr', api_bind_addr);
+
+var api_port = normalizePort(process.env.API_PORT || config.get('API', 'bind_port') || '9959');
+api_app.set('port', api_port);
+
+/**
+ * Create HTTP server.
+ */
+
+var api_server = https.createServer({
+    'pfx': fs.readFileSync(config.get('API', 'pkcs_cert_file')),
+    requestCert: config.get('Developer Options', 'require_client_certificate') == 'false' ? false : true,
+    rejectUnauthorized: config.get('Developer Options', 'validate_client_certificate') == 'false' ? false : true
+}, api_app);
+
+/**
+ * Listen on provided port, on specified network interface(s).
+ */
+
+api_server.listen(api_port, api_bind_addr);
+api_server.on('error', api_onError);
+api_server.on('listening', api_onListening);
+
+/**
+ * Event listener for API HTTP server "error" event.
+ */
+
+function api_onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof api_port === 'string'
+    ? 'Pipe ' + api_port
+    : 'Port ' + api_port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for API HTTP server "listening" event.
+ */
+
+function api_onListening() {
+  var addr = api_server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
 
 }

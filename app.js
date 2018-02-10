@@ -15,7 +15,7 @@ var reset_strategy = require('./passport/reset.js');
 var db = require('./database/controllers/dbm');
 
 var index = require('./routes/index');
-var api = require('./routes/api');
+var users = require('./routes/users');
 
 var app = express();
 
@@ -39,7 +39,7 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/index')(passport));
-app.use('/api', api);
+app.use('/users', users);
 
 passport.serializeUser(function(user, done) {
   done(null, user.badge); 
