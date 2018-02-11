@@ -17,9 +17,6 @@ router.post('/user-access', function(req, res) {
         });
         res.status(403).send('FORBIDDEN');
     } else {
-			db.getUsers('2131415')/then(function(user) {
-				console.log(user);
-			})
         res.set({
             'Content-Type': 'text/plain',
             'User-Id-String': req.body.id,

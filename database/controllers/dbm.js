@@ -96,15 +96,15 @@ module.exports = {
   // ValidationError, Other
   //Description:  This function will take as argument a Badge
   // string which in return should return the user being searched
-  getUser(badge) {
-    return users.findAll({
+  getUser(bId) {
+    return user.findAll({
       where: {
-        sId: badge
+        badge: bId
       }
-    }).then(result => {
-      return result[0];
+     }).then(users => {
+      return users[0];
     }).catch(err => {
-      return module.exports.errorHandling(err, returnStatus);
+      return false;
     });
   },
 
