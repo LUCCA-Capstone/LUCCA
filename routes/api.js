@@ -1,5 +1,6 @@
 var express = require('express');
 var db = require('../database/controllers/dbm');
+var stationLog = require('../lib/station-log');
 var router = express.Router();
 
 // log request
@@ -81,5 +82,50 @@ router.post('/station-heartbeat', function(req, res) {
   } else {
     res.sendStatus(401);
   }
-})
+});
+
+//Usage:  Check if station is registered or not.
+//Arguments:
+//         station-id - Station Id which will be passed in the header of the request
+//Exceptions: 403 Forbidden
+//Description:  This function will set a cached/un-cached stations
+// status to disabled and then return 200 ok if all checks pass.
+router.post('/local-reset', function(req, res){
+	var cert = req.socket.getPeerCertificate();
+  var hObject = req.headers;
+  var sid = hObject['station-id'];
+
+	if(sid && cert.subject){
+    db.getStation(sid).then(results => {
+      if(results){
+        if(results['registered'] && cert.subject.CN === results['certCN']){
+          if(stationLog.updateMachine(sid, 'disabled')){
+           db.logEvent('station-reset', 'Station: ' + sid + ' reset button activated').then(function(){
+             res.sendStatus(200);
+           });
+          }else{
+            db.logEvent('station-reset', 'Station: ' + sid + ' cache error').then(function(){
+              res.sendStatus(500);
+            });
+          }
+        }else{
+          db.logEvent('station-reset', 'Unregistered Station or invalid Cert').then(function() {
+            res.sendStatus(403);
+          });
+        }
+      }else{
+        db.logEvent('station-reset', 'Station: ' + sid + ' not found').then(function() {
+        res.sendStatus(403);
+        });
+      }
+    }).catch(err => {
+      db.logEvent('station-reset error', err).then(function() {
+      res.sendStatus(500);
+      });
+    });
+  }else{
+    res.sendStatus(400);
+  }
+});
+
 module.exports = router;
