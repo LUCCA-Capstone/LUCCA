@@ -88,6 +88,25 @@ module.exports = {
       });
     }
   },
+ 
+  //Usage: Get user by badge number
+  //Arguments:
+  //         bade: user badge string
+  //Exceptions: ConnectionError, DatabaseError, QueryError,
+  // ValidationError, Other
+  //Description:  This function will take as argument a Badge
+  // string which in return should return the user being searched
+  getUser(badge) {
+    return users.findAll({
+      where: {
+        sId: badge
+      }
+    }).then(result => {
+      return result[0];
+    }).catch(err => {
+      return module.exports.errorHandling(err, returnStatus);
+    });
+  },
 
   //Usage: Add a new User to the DB
   //Arguments:
