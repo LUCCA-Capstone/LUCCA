@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*return queryInterface.bulkInsert('users', [{
+    return queryInterface.bulkInsert('users', [{
       badge: '1234567',
       first: 'Some',
       last: 'Guy',
@@ -41,7 +41,7 @@ module.exports = {
         ecPhone: '555-999-1010',
         createdAt: new Date(),
         updatedAt: new Date()
-    }], {});*/
+    }], {});
   },
 
   down: (queryInterface, Sequelize) => {

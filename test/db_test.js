@@ -2,8 +2,8 @@ var chai = require('chai');
 var request = require('request');
 var assert = chai.assert;
 var expect = chai.expect;
-var controllers = require('../../database/controllers/dbm');
-var db = require('../../database/models');
+var controllers = require('../database/controllers/dbm');
+var db = require('../database/models');
 
 var emptyData = {};
 
