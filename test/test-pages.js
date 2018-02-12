@@ -44,7 +44,7 @@ describe('Page status', function () {
         options,
         function(error, response, body) {
           if (error) { console.error(error); }
-          expect(response .statusCode).to.equal(200);
+          expect(response.statusCode).to.equal(200);
           done();
         }
       );
@@ -62,24 +62,26 @@ describe('Page status', function () {
       );
     });
   });
+  
   describe('Badge-in Success page', function() {
     it('status', function(done) {
       request('/badgeinSuccess',
         options,
         function(error, response, body) {
         if (error) { console.error(error); }
-        expect(response .statusCode).to.equal(200);
+        expect(response.statusCode).to.equal(200);
         done();
       });
     });
   });
+
   describe('User Management page', function() {
     it('status', function(done) {
       request('/userManagement',
         options,
         function(error, response, body) {
         if (error) { console.error(error); }
-        expect(response .statusCode).to.equal(200);
+        expect(response.statusCode).to.equal(200);
         done();
       });
     });
@@ -91,7 +93,7 @@ describe('Page status', function () {
         options,
         function(error, response, body) {
         if (error) { console.error(error); }
-        expect(response .statusCode).to.equal(200);
+        expect(response.statusCode).to.equal(200);
         done();
       });
     });
@@ -103,9 +105,40 @@ describe('Page status', function () {
         options,
         function(error, response, body) {
         if (error) { console.error(error); }
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
+
+  describe('Station management page', function() {
+    it('status of all results', function(done) {
+      request('/stationManagement/all',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+    it('status of registered stations results', function(done) {
+      request('/stationManagement/registered',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+    it('status of unregistered stations results', function(done) {
+      request('/stationManagement/unregistered',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
         expect(response .statusCode).to.equal(200);
         done();
       });
     });
   });
+  
 });
