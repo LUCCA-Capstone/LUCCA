@@ -2,12 +2,12 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('logs', {
-      id: {
+      Id: {
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      eventType: {
+      eventClass: {
         allowNull: false,
         type: Sequelize.STRING
       },
@@ -18,8 +18,8 @@ module.exports = {
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
-    });
+      },
+    }, {timestamps:false});
   },
   down: (queryInterface, Sequelize) => {
     return queryInterface.dropTable('logs');

@@ -2,19 +2,19 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*return queryInterface.bulkInsert('logs', [{
-        eventType: 'New User',
+    return queryInterface.bulkInsert('logs', [{
+        eventClass: 'New User',
         event: 'Blah Blab Blah...',
         createdAt: new Date(),
     },{
-        eventType: 'Remove Machine',
+        eventClass: 'Remove Machine',
         event: 'Bleep Bloop Blop...',
         createdAt: new Date(),
     },{
-        eventType: 'Grant Privileges',
+        eventClass: 'Grant Privileges',
         event: 'Zoom Zam Zee',
         createdAt: new Date(),
-    }], {});*/
+    }], {});
   },
 
   down: (queryInterface, Sequelize) => {

@@ -23,6 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: sequelize.fn('now')
       }
-  });
+  }, {timestamps: false});
   return log;
 };

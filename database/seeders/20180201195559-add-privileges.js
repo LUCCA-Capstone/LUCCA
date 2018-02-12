@@ -2,7 +2,7 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*return queryInterface.bulkInsert('privileges', [{
+    return queryInterface.bulkInsert('privileges', [{
         badge: '8910111',
         sId: '2',
         createdAt: new Date(),
@@ -17,7 +17,18 @@ module.exports = {
         sId: '1',
         createdAt: new Date(),
         updatedAt: new Date()
-    }], {});*/
+    },{
+      badge: '1234567',
+      sId: '1',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    },
+      {
+        badge: '1234567',
+        sId: '3',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }], {});
   },
 
   down: (queryInterface, Sequelize) => {
