@@ -62,6 +62,7 @@ describe('Page status', function () {
       );
     });
   });
+
   describe('Badge-in Success page', function() {
     it('status', function(done) {
       request('/badgeinSuccess',
@@ -73,6 +74,7 @@ describe('Page status', function () {
       });
     });
   });
+
   describe('User Management page', function() {
     it('status', function(done) {
       request('/userManagement',
