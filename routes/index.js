@@ -22,7 +22,7 @@ module.exports = function (passport) {
     failureRedirect: '/adminLogin'
   }));
 
-  router.get('/adminRegister', function(req, res){
+  router.get('/adminRegister', function (req, res) {
     res.render('adminRegister.njk');
   });
 
@@ -94,7 +94,6 @@ module.exports = function (passport) {
       else {
         console.log('You logged in succesfully');
         console.log(BadgeNumber);
-
         res.redirect('/badgeinSuccess');
       }
     });
@@ -110,7 +109,7 @@ module.exports = function (passport) {
     }
     res.redirect('/badgein');
   });
-  
+
   router.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
@@ -128,6 +127,7 @@ module.exports = function (passport) {
       res.render('userManagement.njk', { obj: [ret.dataValues] });
     });
   });
+
 
   /*GET stationManagment route will render a table of all stations that match filter parameter.
    *    If filter == "registered", only registered stations will be displayed (i.e. registered = true)
@@ -173,6 +173,59 @@ module.exports = function (passport) {
         res.redirect('/stationManagement/' + req.params.filter);
       });
     }
+  });
+
+  router.post('/userManagement/deleteUser/:badge', function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var DeletedBagde = req.params.badge;
+    dbAPI.deleteUser(DeletedBagde).then(function (result) {
+      console.log(result);
+      console.log("user is deleted successfully");
+    });
+    res.redirect('/userManagement');
+  });
+
+  router.post('/userManagement/confirmUser/:badge', function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+    dbAPI.modifyUser(BagdeID, { confirmation: true }).then(function (result) {
+      if (result == undefined) {
+        console.log("Error");
+      }
+      else {
+        console.log("confirmation changed successfully");
+      }
+    });
+    res.redirect('/userManagement');
+  });
+
+  router.post('/userManagement/deletePrivilege/:badge/:station', function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+    var StationID = req.params.station;
+    dbAPI.removePrivileges(BagdeID, StationID).then(function (result) {
+      console.log(result);
+    });
+    res.redirect('/userManagement');
+  });
+
+  router.post('/userManagement/grantPrivilege/:badge/:station', function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+    var StationID = req.params.station;
+    dbAPI.grantPrivileges(BagdeID, StationID).then(function (result) {
+      console.log(result);
+    });
+    res.redirect('/userManagement');
+
   });
 
   return router;
