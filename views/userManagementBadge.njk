@@ -1,0 +1,119 @@
+{% extends '_layout.njk' %}
+
+{% block description %}
+<meta name="description" content="User Management Edit a User/Station">
+{% endblock %}
+
+{% block title %}
+<title>LUCCA User Management Edit</title>
+{% endblock %}
+
+{% block customCSS %}
+<link rel="stylesheet" href="/stylesheets/userManagement.css">
+{% endblock %}
+
+{% block content %}
+{# User Information Table #}
+<div class="container mb-5 pb-5">
+    <table class="table table-bordered " style="width:40%; display:inline-block; align:left; vertical-align: top">
+    <tr>
+        <th>Name</th>
+        <td>{{user.first}} {{user.last}}</td>
+    </tr>
+    <tr>
+        <th>Badge ID</th>
+        <td>{{user.badge}}</td>
+    </tr>
+    <tr>
+        <th>Email</th>
+        <td>{{user.email}}</td>
+    </tr>
+    <tr>
+        <th>Phone</th>
+        <td>{{user.phone}}</td>
+    </tr>
+    <tr>
+        <th>Signature</th>
+        <td>{{user.signature}}</td>
+    </tr>
+    <tr>
+        <th>Parent/Guardian signature</th>
+        <td>{{user.ecSignature}}</td>
+    </tr>
+    <tr>
+        <th>Emergency contact name</th>
+        <td>{{user.ecName}}</td>
+    </tr>
+    <tr>
+        <th>Emergency relationship</th>
+        <td>{{user.ecRel}}</td>
+    </tr>
+    <tr>
+        <th>Emergency phone number</th>
+        <td>{{user.ecPhone}}</td>
+    </tr>
+    <tr>
+        <th>Updated at: </th>
+        <td>{{user.updatedAt}}</td>
+    </tr>
+    <tr>
+        <th>Created at: </th>
+        <td>{{user.createdAt}}</td>
+    </tr>
+    <tr>
+        <th></th>
+        {% if user.confirmation %}
+            <td>
+                <form id="deleteForm" action="/userManagement/deleteUser/{{user.badge}}" method="post" onsubmit="return confirm('This user will be deleted!')">
+                <button type='submit' class="btn btn-primary" name='submit' value="">Delete</button>
+                </form>
+            </td>
+        {% else %}
+            <td>
+                <form id="validateForm" action="/userManagement/confirmUser/{{user.badge}}" method="post" onsubmit="return confirm('This user will be validated!')">
+                <button type='submit' class="btn btn-primary" name='submit' value="">Validate</button>
+                </form>
+            </td>
+        {% endif %}
+    </tr>
+
+  </table>
+
+{# Station listing #}
+
+  <table class="table table-bordered" style="width:55%; display:inline-block; align:right; vertical-align: top">
+    <thead>
+        <tr>
+            <th scope="col" nowrap="nowrap">Station ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Status</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+        {% for station in allStations %}
+        <tr>
+            <td>{{station.sId}}</td>
+            <td>{{station.name}}</td>
+            <td>{{station.description}}</td>
+            {% if station.trained %}
+                <td>Trained</td>
+                <td>
+                    <form id="revokePrivForm" action="/userManagement/deletePrivilege/{{user.badge}}/{{station.sId}}" method="post" onsubmit="return confirm('This user will be revoked access to {{station.name}}!')">
+                    <button type='submit' class="btn btn-primary" name='submit' value="">Revoke</button> 
+                    </form>
+                </td>
+            {% else %}
+                <td>Not Trained</td>
+                <td>
+                    <form id="grantPrivForm" action="/userManagement/grantPrivilege/{{user.badge}}/{{station.sId}}" method="post" onsubmit="return confirm('This user will be granted access to {{station.name}}!')">
+                    <button type='submit' class="btn btn-primary" name='submit' value="">Grant Access</button>
+                    </form>
+                </td>
+            {% endif %}
+        </tr>
+        {% endfor %}  
+  </table>
+</div>
+{% endblock %}
+

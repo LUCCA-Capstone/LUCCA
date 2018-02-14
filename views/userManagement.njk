@@ -16,7 +16,7 @@
 </div>
 <br />
 <form id="searchForm" style="display:inline;" method="post">
-    <input id="searchBox" name="userInput" size="40" type="text" placeholder="Search User (by Badge ID or Email) Here"/>
+    <input id="searchBox" name="userInput" size="40" type="text" placeholder="Search User (by Badge ID or Email) Here"required/>
     <input id="searchBtn" value="Go" type="submit"/>
 </form> 
 <br /><br />
@@ -29,25 +29,37 @@
     </div>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Badge Number</th>
-            <th scope="col">Validated</th>
-            <th scope="col">Edit</th>
-            </tr>
-    </thead>
+<div class="container mb-5 pb-5">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Badge Number</th>
+                <th scope="col">Validated</th>
+                <th scope="col">Edit</th>
+                </tr>
+        </thead>
 
-    {% for item in obj %}
-        <tr>
-            <td>{{item.first}} {{item.last}}</td>
-            <td>{{item.badge}}</td>
-            <td>{{item.confirmation}}</td>
-            <td><a href="#">User</a> <a href="#">Station</a> </td> 
-        </tr>
-    {% endfor %}   
-</table>
+        {% for item in obj %}
+            <tr>
+                <td>{{item.first}} {{item.last}}</td>
+                <td><name="badgeNumber">{{item.badge}}</td>
+                <td>{{item.confirmation}}</td>
+                <td><button class="btn btn-primary" onclick="fwd(this)" data-badge={{item.badge}} >User-Station</button></td>
+                {# <td action="/userManagement/badge" method="post"><button class="btn btn-primary" type="Submit">User-Station</button><td> #}
+            </tr>
+        {% endfor %}   
+    </table>
+</div>
+
+<script type="text/javascript">
+
+        function fwd(obj) {
+            var badge  = obj.getAttribute("data-badge")
+            window.location.href = ("/userManagement/" + badge), true
+        }
+
+</script>
 
 
 {% endblock %}
