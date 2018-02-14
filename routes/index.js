@@ -113,7 +113,7 @@ module.exports = function (passport) {
 
 
   router.get('/userManagement', checkAuth, function (req, res) {
-    dbAPI.getUsers('2000-01-01', '3000-01-01').then(function (ret) {
+    dbAPI.getUsers().then(function (ret) {
       res.render('userManagement.njk', { obj: ret, authenticated: true });
     });
   });
@@ -122,7 +122,7 @@ module.exports = function (passport) {
   router.post('/userManagement', checkAuth, function (req, res) {
     dbAPI.validateUser(req.body.userInput).then(function (ret) {
       console.log(ret.dataValues);
-      res.render('userManagement.njk', { obj: [ret.dataValues] });
+      res.render('userManagement.njk', { obj: [ret.dataValues], authenticated: true });
     });
   });
 
@@ -193,6 +193,42 @@ module.exports = function (passport) {
     });
     res.redirect('/userManagement');
 
+  });
+
+
+  router.get('/userManagement/:badge', checkAuth, function(req,res){
+    var BadgeNumber = req.params.badge;
+    //dbAPI.grantPrivileges(BadgeNumber, '1');
+    Promise.all([
+      dbAPI.getStations(undefined),
+      dbAPI.getPrivileges(BadgeNumber),
+      dbAPI.validateUser(BadgeNumber)
+    ])
+    .then(
+      ([allStations,trainedStation,userInfo])=>{
+        var flag = new Boolean(false);
+        for(var i = 0; i < allStations.length; ++i){
+          for(var j = 0; j < trainedStation.length; ++j){
+            if (allStations[i].sId === trainedStation[j].sId){
+              allStations[i].trained = true;
+              flag = true;
+            }
+          }
+          if(flag != true){
+            allStations[i].trained = false;
+          }
+          flag = false;
+        }
+        console.log(allStations);
+        res.render('userManagementBadge.njk', {authenticated: true, user: userInfo.dataValues, allStations});  
+      }
+    )
+    .catch(
+      err=>{
+        console.warn("something went wrong:",err);
+        res.status(500).send(err);
+      }
+    );
   });
 
   return router;
