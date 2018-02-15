@@ -356,22 +356,28 @@ describe('DB TEST', function () {
 */
 
   describe('getEvents testing', function(){
-    it('Get all logged events (should return a list containing four events)', function(done){
+    it('Get all logged events (should return a list containing at least four events)', function(done){
       controllers.getEvents().done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(4);
+        expect(results).to.be.an('array').that.has.lengthOf.above(3);
         done();
       });
     });
 
-    it('Get all logged events with class generic_event (should return a list containing three events)', function(done){
+    it('Get all logged events with class generic_event (should return a list containing at least three events)', function(done){
       controllers.getEvents('generic_event').done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(3);
+        expect(results).to.be.an('array').that.has.lengthOf.above(2);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
+        }
         done();
       });
     });
     it('Get all events logged with an event_class of different_event (should return a list containing one event)', function(done){
       controllers.getEvents('different_event').done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(1);
+        expect(results).to.be.an('array').that.has.lengthOf.above(0);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].eventClass).to.be.a('string').that.equals('different_event');
+        }
         done();
       });
     });
@@ -383,13 +389,19 @@ describe('DB TEST', function () {
     });
     it('Get all events logged after 2005 (should return a list containing one event)', function(done){
       controllers.getEvents(undefined, from=new Date('1-1-2005')).done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(3);
+        expect(results).to.be.an('array').that.has.lengthOf.above(2);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].createdAt).to.be.a('date').that.is.above(from);
+        }
         done();
       });
     });
     it('Get all events logged before 2005 (should return a list containing three events)', function(done){
       controllers.getEvents(undefined, undefined, to=new Date('1-1-2005')).done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(1);
+        expect(results).to.be.an('array').that.has.lengthOf.above(0);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].createdAt).to.be.a('date').that.is.not.above(to);
+        }
         done();
       });
     });
@@ -401,13 +413,20 @@ describe('DB TEST', function () {
     });
     it('Get all events logged after 2005 but before 2050 (should return a list containing three events)', function(done){
       controllers.getEvents(undefined, from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(3);
+        expect(results).to.be.an('array').that.has.lengthOf.above(2);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].createdAt).to.be.a('date').that.is.above(from).and.not.above(to);
+        }
         done();
       });
     });
     it('Get all events logged after 2005 but before 2050 with event class generic_event (should return a list containing two events)', function(done){
       controllers.getEvents('generic_event', from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
-        expect(results).to.be.an('array').that.has.lengthOf(2);
+        expect(results).to.be.an('array').that.has.lengthOf.above(1);
+        for (var i = 0; i < results.length; i++){
+          expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
+          expect(results[i].createdAt).to.be.a('date').that.is.above(from).and.not.above(to);
+        }
         done();
       });
     });
@@ -418,16 +437,16 @@ describe('DB TEST', function () {
 */
 
   describe('deleteEvent testing', function(){
-    it('Delete all events', function(done){
+    it('Delete an event', function(done){
       controllers.getEvents().then(function(results){
-        for(let item of results){
-          controllers.deleteEvent(
-            item.dataValues['Id']
-          );
-        }
-        controllers.getEvents().then(function(remaining){
-          expect(remaining).to.be.an('array').that.has.lengthOf(0);
-          done();
+        var first = results[0].Id;
+        controllers.deleteEvent(first).then(function(results_2){
+          controllers.getEvents().then(function(remaining){
+            for (var i = 0; i < remaining.length; i++){
+              expect(remaining[i].Id).to.not.equal(first);
+            }
+            done();
+          });
         });
       });
     });
