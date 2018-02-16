@@ -335,6 +335,7 @@ module.exports = {
       name: stationData.name,
       description: stationData.description,
       registered: stationData.registered,
+      certCN: stationData.certCN,
       createdAt: new Date(),
       updatedAt: new Date()
     }).then(function (result) {
@@ -405,24 +406,24 @@ module.exports = {
   //Description:  This function will record all interactivity between
   // the users and the database.  As well as all errors that occurred.
   logEvent(eventClass, eventText, eventDate=undefined){
-    return db.sequelize.transaction(function (t){
-      var returnStatus = {result: true, detail: 'Success'};
+    var returnStatus = {result: true, detail: 'Success'};
+    let logData = {
+      eventClass: eventClass, // A string representing the sort of event (e.g. access, error, management, start-stop)
+      event: eventText, // The explanatory string describing the event (i.e. the text of the log entry)
+    }
+    if (eventDate) {
+      logData['eventDate'] = eventDate
+    }
 
-      //Adds a new row to the event table
-      return log.create({
-        eventClass: eventClass, // A string representing the sort of event (e.g. access, error, management, start-stop)
-        event: eventText, // The explanatory string describing the event (i.e. the text of the log entry)
-        createdAt: eventDate, // The date at which the event occured. If undefined, this should use the SQL
-                         //   schema 'DEFAULT now()' clause to set a current timestamp at the time it is written.
-      }, {transaction: t}).then(function (){
-        //Transaction completed
-        return returnStatus;
-      }).catch(error =>{
-        //Transaction incomplete -
-        //Error occurred when adding data to the
-        //Event table.
-        return module.exports.errorHandling(error, returnStatus);
-      });
+    //Adds a new row to the event table
+    return log.create(logData).then(function (result){
+      //Transaction completed
+      return returnStatus;
+    }).catch(err =>{
+      //Transaction incomplete -
+      //Error occurred when adding data to the
+      //Event table.
+      return module.exports.errorHandling(error, returnStatus);
     });
   },
 
@@ -440,37 +441,31 @@ module.exports = {
   // results are returned.
   getEvents(eventClass=undefined, from=undefined, to=undefined){
     var queryParameters = {};
+    var returnStatus = {result: true, detail: 'Success'};
     if (typeof(eventClass) != 'undefined') {
       queryParameters["eventClass"] = eventClass;
     }
     if (typeof(from) != 'undefined' && typeof(to) != 'undefined') {
-      queryParameters["createdAt"] = {
+      queryParameters["eventDate"] = {
         [Op.gte] : from,
         [Op.lte] : to
       }
     } else if (typeof(from) != 'undefined') {
-      queryParameters["createdAt"] = {
+      queryParameters["eventDate"] = {
         [Op.gte] : from
       }
     } else if (typeof(to) != 'undefined') {
-      queryParameters["createdAt"] = {
+      queryParameters["eventDate"] = {
         [Op.lte] : to
       }
     }
-    return db.sequelize.transaction(function (t){
-
-      // Fetches a list of logged events from the database
-      return log.findAll({
-        where: queryParameters
-      }, {transaction: t}).then(function(data){
-        //Transaction completed
-        return data;
-      }).catch(error =>{
-        //Transaction incomplete -
-        //Error occurred when adding data to the
-        //RegInfo table.
-        return module.exports.errorHandling(error);
-      });
+    return log.findAll({
+      where: queryParameters
+    }).then(function(data){
+      return data;
+    }).catch(err =>{
+      console.log(JSON.stringify(err, null, 2));
+      return [];
     });
   },
 
@@ -485,7 +480,7 @@ module.exports = {
     console
     return log.destroy({
       where: {
-        Id: eventId
+        id: eventId
       }
     }).then(function(){
       return {result: true, detail: 'Success'};

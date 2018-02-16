@@ -2,7 +2,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('logs', {
-      Id: {
+      id: {
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
@@ -13,11 +13,12 @@ module.exports = {
       },
       event: {
         allowNull: false,
-        type: Sequelize.STRING
+        type: Sequelize.STRING(4096)
       },
-      createdAt: {
+      eventDate: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.fn('now')
       },
     }, {timestamps:false});
   },

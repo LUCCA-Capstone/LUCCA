@@ -10,6 +10,10 @@ Alternately, it can be imported into another Python project and used as a librar
 
 import requests, argparse, re, sys
 
+#import urllib3
+#urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# uncomment this line locally if you want to disable securiyt warnings from urllib3. however, this line causes errors with travis CI.
+
 _defaults = {
   'controller' : None,
   'station_id' : '1',
@@ -110,9 +114,10 @@ def validate_response(response, request, assertions):
       pass
 
   if failures:
-    print("{0} failures were encountered while validating the endpoint response.")
+    print("{0} failures were encountered while validating the endpoint response".format(failures))
     return False
   else:
+    print("Response valid, all constraints met (status code {0})".format(response.status_code))
     return True
 
 def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
@@ -132,7 +137,7 @@ def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controlle
 
   assertions = {
              'headers'     : {}, # No universal header assertions
-             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
+             'body'        : r'^(OK|Unauthorized|Forbidden)$',
              'rcode'       : [200, 401, 403], # These are the only expected response codes (400 indicates an error in this test)
              'conditional' : [ # Conditional tests to run based on circumstances go here
                                ( # First conditional assertion 
@@ -185,7 +190,7 @@ def local_reset(cert, use_ssl=True, verify=True, controller=_defaults['controlle
 
   assertions = {
              'headers'     : {},
-             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
+             'body'        : r'^(OK|Unauthorized|Forbidden)$',
              'rcode'       : [200, 401, 403],
              'conditional' : []
            }
@@ -208,7 +213,7 @@ def last_state(cert, use_ssl=True, verify=True, controller=_defaults['controller
 
   assertions = {
              'headers'     : {},
-             'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
+             'body'        : r'^(OK|Unauthorized|Forbidden)$',
              'rcode'       : [200, 401, 403],
              'conditional' : [
                                ( # If response code is 200, Station-State header should be included
@@ -255,7 +260,7 @@ def station_heartbeat(cert, use_ssl=True, verify=True, controller=_defaults['con
 
   assertions = {
                  'headers'     : {},
-                 'body'        : r'^(OK|UNAUTHORIZED|FORBIDDEN)$',
+                 'body'        : r'^(OK|Unauthorized|Forbidden)$',
                  'rcode'       : [200, 401, 403],
                  'conditional' : [
                                    ( # If response code is 200, expect a Date header
@@ -300,7 +305,6 @@ if __name__ == '__main__':
   args = parser.parse_args()
 
   if do_action[args.action](**vars(args)):
-      print("Valid response received.")
       sys.exit(0)
   else:
       sys.exit(1)
