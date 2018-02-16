@@ -26,6 +26,10 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
+      },
+      certCN: {
+        allowNull: false,
+        type: Sequelize.STRING(4096)
       }
     });
   },

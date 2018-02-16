@@ -1,7 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   var log = sequelize.define('log', {
-    Id:
+    id:
       {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -14,15 +14,15 @@ module.exports = (sequelize, DataTypes) => {
       },
     event:
       {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(4096),
         defaultValue: null
       },
-    createdAt:
+    eventDate:
       {
-        type: DataTypes.DATE,
         allowNull: false,
+        type: DataTypes.DATE,
         defaultValue: sequelize.fn('now')
-      }
+      },
   }, {timestamps: false});
   return log;
 };

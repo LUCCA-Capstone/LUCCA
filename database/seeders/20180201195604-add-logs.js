@@ -5,15 +5,12 @@ module.exports = {
     return queryInterface.bulkInsert('logs', [{
         eventClass: 'New User',
         event: 'Blah Blab Blah...',
-        createdAt: new Date(),
     },{
         eventClass: 'Remove Machine',
         event: 'Bleep Bloop Blop...',
-        createdAt: new Date(),
     },{
         eventClass: 'Grant Privileges',
         event: 'Zoom Zam Zee',
-        createdAt: new Date(),
     }], {});
   },
 

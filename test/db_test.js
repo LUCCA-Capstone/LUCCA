@@ -48,6 +48,7 @@ var stationData = {
   name: 'My nam Jef',
   description: 'Jef the man',
   registered: false,
+  certCN: 'localhost'
 }
 
 describe('DB TEST', function () {
@@ -391,7 +392,7 @@ describe('DB TEST', function () {
       controllers.getEvents(undefined, from=new Date('1-1-2005')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].createdAt).to.be.a('date').that.is.above(from);
+          expect(results[i].eventDate).to.be.a('date').that.is.above(from);
         }
         done();
       });
@@ -400,7 +401,7 @@ describe('DB TEST', function () {
       controllers.getEvents(undefined, undefined, to=new Date('1-1-2005')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].createdAt).to.be.a('date').that.is.not.above(to);
+          expect(results[i].eventDate).to.be.a('date').that.is.not.above(to);
         }
         done();
       });
@@ -415,7 +416,7 @@ describe('DB TEST', function () {
       controllers.getEvents(undefined, from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].createdAt).to.be.a('date').that.is.above(from).and.not.above(to);
+          expect(results[i].eventDate).to.be.a('date').that.is.above(from).and.not.above(to);
         }
         done();
       });
@@ -425,7 +426,7 @@ describe('DB TEST', function () {
         expect(results).to.be.an('array').that.has.lengthOf.above(1);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
-          expect(results[i].createdAt).to.be.a('date').that.is.above(from).and.not.above(to);
+          expect(results[i].eventDate).to.be.a('date').that.is.above(from).and.not.above(to);
         }
         done();
       });
@@ -439,14 +440,17 @@ describe('DB TEST', function () {
   describe('deleteEvent testing', function(){
     it('Delete an event', function(done){
       controllers.getEvents().then(function(results){
-        var first = results[0].Id;
+        var first = results[0].id;
         controllers.deleteEvent(first).then(function(results_2){
           controllers.getEvents().then(function(remaining){
             for (var i = 0; i < remaining.length; i++){
-              expect(remaining[i].Id).to.not.equal(first);
+              expect(remaining[i].id).to.not.equal(first);
             }
             done();
           });
+        }).catch(err => {
+          console.log(err);
+          done();
         });
       });
     });
