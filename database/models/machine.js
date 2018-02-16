@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
       {
         type: DataTypes.DATE,
         allowNull: false
+      },
+    certCN:
+      {
+        type: DataTypes.STRING(4096),
+        allowNull: false
       }
   });
 

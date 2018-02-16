@@ -15,7 +15,7 @@ router.post('/user-access', function(req, res) {
             'Content-Typer': 'text/plain',
             'Station-State': stationState = 'Disabled'
         });
-        res.status(403).send('FORBIDDEN');
+        res.status(403).send('Forbidden');
     } else {
         res.set({
             'Content-Type': 'text/plain',
@@ -32,30 +32,43 @@ router.post('/station-heartbeat', function(req, res) {
 		var stationId = headerObj['sid'];
 		db.getStation(stationId).then(function(station) {
 			if(station) {
-				res.set({
-					'Content-Type': 'text/plain',
-					'Date': new Date().toString()
+				var cert = req.socket.getPeerCertificate();
+				if (station.certCN != cert.subject.CN) {
+					if (!station.registered) {
+						db.logEvent('station management', "Heartbeat for unregistered station with ID '" + StationId + "' provided a new station CN. Changing to '" + cert.subject.CN + "'")
+						db.modifyStation(stationId, {certCN: cert.subject.CN});
+					} else {
+						db.logEvent('station management', "Heartbeat for station with ID '" + StationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')")
+					}
+					res.status(403).send('Forbidden');
+				} else {
+					res.set({
+						'Content-Type': 'text/plain',
+						'Date': new Date().toString()
+					});
+					res.sendStatus(200);
+				}
+			} else {
+				var newStation = {
+					sId: stationId,
+					name: 'none',
+					description: 'none',
+					registered: false,
+					certCN: cert.subject.CN
+				};
+				db.createStation(newStation).then(function(result) {
+					db.logEvent('station management', "Unrecognized heartbeat created a new unregistered station with ID '" + StationId + "', certificate CN '" + cert.subject.CN + "'")
+					if(result) {
+						res.set({
+							'Content-Type': 'text/plain',
+							'Date': new Date().toString()
+						});
+						res.sendStatus(200);
+					}
+				}).catch((error) => {
+				//Internal error in database
+					res.sendStatus('Database error', error);
 				});
-				res.sendStatus(200);
-	} else {
-		var newStation = {
-			sId: stationId,
-			name: 'none',
-			description: 'none',
-			registered: false
-		};
-		db.createStation(newStation).then(function(result) {
-			if(result) {
-				res.set({
-					'Content-Type': 'text/plain',
-					'Date': new Date().toString()
-				});
-				res.sendStatus(200);
-			}
-			}).catch((error) => {
-			//Internal error in database
-				res.sendStatus('Database error', error);
-			});
 			}
 		}).catch((error) => {
 			//Internal error in database

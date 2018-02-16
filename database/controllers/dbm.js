@@ -335,6 +335,7 @@ module.exports = {
       name: stationData.name,
       description: stationData.description,
       registered: stationData.registered,
+      certCN: stationData.certCN,
       createdAt: new Date(),
       updatedAt: new Date()
     }).then(function (result) {
