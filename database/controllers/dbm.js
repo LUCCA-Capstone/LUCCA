@@ -272,12 +272,16 @@ module.exports = {
 
   //Usage: Returns a list of registered or unregistered stations
   //Arguments:
-  //         registered - True value indicates to return registered stations
+  //         regTypeRequest - true value indicates to return registered stations
+  //                        - false value indicates to return unregistered stations
+  //                        - undefined (default/emtpy) value indicates to return all stations
   //Exceptions: ConnectionError, DatabaseError, QueryError,
   // ValidationError, Other
-  //Description:  This function returns a JSON object of all stations.
-  // If the registered value is true then only the registered stations are returned.
-  // Otherwise, it only returns unregistered stations.
+  //Description: This function returns a JSON object of all stations that match regTypeRequest.
+  //Returns: registered stations if regTypeRequest is true
+  //         unregistered stations if regTypeRequest is flase
+  //         false if database error
+  //         undefined if invalid argument was passed
   getStations(regTypeRequest) {
     if (regTypeRequest === undefined) {
       //return all stations if registered type not specified;
