@@ -128,59 +128,16 @@ module.exports = function (passport) {
     });
   });
 
+  router.get('/stationManagement/:filter', jsonParser, getStnMngmnt);
 
-  /*GET stationManagment route will render a table of all stations that match filter parameter.
-   *    If filter == "registered", only registered stations will be displayed (i.e. registered = true)
-   *    If filter == "unregistered", only unregistered stations will be displayed (i.e. registered = false)
-   *    Otherwise, all stations will be displayed sorted with unregistered stations first.
-   *********************************************************************************************************/
-  router.get('/stationManagement/:filter', jsonParser, function (req, res, next) {
-    //set filter based on query parameter passed in
-    var filter = req.params.filter;
-    filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
-
-    //get results from database that match filter
-    dbAPI.getStations(filter).then(function(ret) {
-      //display ordered with unregistered stations first
-      /* UNCOMMENT THIS CODE WHEN TRAVIS HAS ACCESS TO A DATABASE SO RESULTS ARE SORTED
-       * ret.sort(function(a,b) {
-       *   return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
-       * });
-      */
-      res.render('stationManagement.njk', {obj: ret});
-    });
-  });
-
-  /*POST stationManagement serves two purposes: if user req.body JSON contains a "delete" element,
-   *     then the user pushed a "delete" button and the station referenced by "sId" element is deleted from tables.
-   *     Otherwise, the station identified by "sId" is updated to values in JSON body and registered = true.
-   ***************************************************************************************************************/
-  router.post('/stationManagement/:filter', jsonParser, function (req, res) {
-    if (!req.body) {
-      //400 Bad Request
-      return res.sendStatus(400);
-    }
-
-    if(req.body.delete === "true") {
-      dbAPI.deleteStation(req.body.sId).then(function(ret) {
-        res.redirect('/stationManagement/' + req.params.filter);
-      });
-    } else {
-      //convert registered string to a boolean & new date before updating in tables
-      req.body.registered = (req.body.registered === "true") ? true : false;
-      req.body.updatedAt = new Date();
-      dbAPI.modifyStation(req.body.sId, req.body).then(function (ret) {
-        res.redirect('/stationManagement/' + req.params.filter);
-      });
-    }
-  });
+  router.post('/stationManagement/:filter', jsonParser, postStnMngr, getStnMngmnt);
 
   router.post('/userManagement/deleteUser/:badge', function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var DeletedBagde = req.params.badge;
-    dbAPI.deleteUser(DeletedBagde).then(function (result) {
+    var DeletedBadge = req.params.badge;
+    dbAPI.deleteUser(DeletedBadge).then(function (result) {
       console.log(result);
       console.log("user is deleted successfully");
     });
@@ -235,4 +192,85 @@ var checkAuth = function (req, res, next) {
   if (req.isAuthenticated())
     return next();
   res.redirect('/');
+}
+
+
+/*getStnMngmnt will render a table of all stations that match filter parameter.
+  *    If filter == "registered", only registered stations will be displayed (i.e. registered = true)
+  *    If filter == "unregistered", only unregistered stations will be displayed (i.e. registered = false)
+  *    Otherwise, all stations will be displayed sorted with unregistered stations first.
+  *    If "messageType" and "message" are defined in req, it will trigger alert message passing in DOM.
+  *********************************************************************************************************/
+function getStnMngmnt(req, res) {
+  //set filter based on query parameter passed in
+  var filter = req.params.filter;
+  filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
+
+  var data = {
+    messageType: req.messageType,
+    message: req.message
+  }
+
+  //get results from database that match filter
+  dbAPI.getStations(filter).then(function(ret) {
+    if (ret !== false && ret !== undefined) {
+      ret.sort(function(a,b) {
+        return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
+      });
+      //display sorted array of stations, unregistered stations first
+      data.obj = ret;
+    } else {
+      //display error to user if no database using alert message on page
+      data.obj = ret;
+      data.messageType = 'error',
+      data.message = "There was a problem communicating with the database.\
+                      Please contact the DB administrator."
+    }
+    res.render('stationManagement.njk', data);
+  });
+}
+
+
+/*postStnMngr serves two purposes: if req.body JSON contains a "delete" element, then the
+ *     user pushed a "delete" button and the station referenced by "sId" element is deleted from tables.
+ *     Otherwise, the station identified by "sId" is updated to values in JSON body and registered = true.
+ *     Implements message passing: signals success or failure to "next" in "req.messageType" and "req.message"
+ ***************************************************************************************************************/
+function postStnMngr(req, res, next) {
+  if (!req.body) {
+    //400 Bad Request
+    return res.sendStatus(400);
+  }
+
+  req.messageType = "success"; //temporarily assume success!
+
+  if(req.body.delete === "true") {
+    //delete station referenced by sId in body
+    dbAPI.deleteStation(req.body.sId).then(function(ret) {
+      if (ret.result === true) {
+        req.message = req.body.name + " has been successfully deleted.";
+      } else {
+        req.messageType = "error";
+        req.message = "Internal problem - unable to delete " + req.body.name + ".";        
+      }
+      next();
+    });
+  } else {
+    //convert registered string to a boolean & give new update date
+    req.body.registered = (req.body.registered === "true") ? true : false;
+    req.body.updatedAt = new Date();
+
+    //update station referenced by sId in body
+    dbAPI.modifyStation(req.body.sId, req.body).then(function (ret) {
+      //prepare to pass success message to next()
+      if (ret.result === true) {
+        //req.message = "Successfully updated " + req.body.name + ".";
+        req.message = req.body.name + " has been succesfully updated.";
+      } else {
+        req.messageType = "error";
+        req.message = "Internal problem - unable to update " + req.body.name + ".";
+      }
+      next();
+    });
+  }
 }
