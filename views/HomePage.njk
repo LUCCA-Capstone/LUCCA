@@ -1,35 +1,31 @@
 {% extends '_layout.njk' %}
 
-    {% block description %}
-    <meta name="description" content="LUCCA HomePage.">
-    {% endblock %}
+{% block description %}
+<meta name="description" content="LUCCA HomePage.">
+{% endblock %}
 
-    {% block title %}
-    <title>LUCCA HomePage</title>
-    {% endblock %}
+{% block title %}
+<title>LUCCA HomePage</title>
+{% endblock %}
 
-    <!-- Custom styles for this template -->
-    {% block customCSS %}
-    <link rel="stylesheet" href="stylesheets/navbar.css">
-    {% endblock %}
+<!-- Custom styles for this template -->
+{% block customCSS %}
+<link rel="stylesheet" href="stylesheets/navbar.css">
+{% endblock %}
 
-    {% block Home %}
-    <li class="nav-item active">
-      <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
-    </li>
-    {% endblock %}
+{% block Home %}
+<li class="nav-item active">
+  <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
+</li>
+{% endblock %}
 
-    {% block adminManagement %}
-    <!-- Hide admin buttons (we'll add logic to handle this here later) -->
-    {% endblock %}
-
-    {% block content %}
-      <div class="jumbotron">
-        <h1>EPL Web App HomePage</h1>
-        <p>This will display anything on the homepage.</p>
-      </div>
-    </div> <!-- /container -->
-    {% endblock %}
+{% block content %}
+  <div class="jumbotron">
+    <h1>EPL Web App HomePage</h1>
+    <p>This will display anything on the homepage.</p>
+  </div>
+</div> <!-- /container -->
+{% endblock %}
 
 {# 
 <!DOCTYPE html>

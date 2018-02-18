@@ -10,11 +10,11 @@ module.exports = function (passport) {
 
   /* GET home page. */
   router.get('/', function (req, res) {
-    res.render('HomePage.njk');
+    res.render('HomePage.njk', { authenticated: req.isAuthenticated() });
   });
 
   router.get('/adminLogin', function (req, res) {
-    res.render('adminLogin.njk');
+    res.render('adminLogin.njk', { authenticated: req.isAuthenticated() });
   });
 
   router.post('/adminLogin', passport.authenticate('login', {
@@ -22,26 +22,26 @@ module.exports = function (passport) {
     failureRedirect: '/adminLogin'
   }));
 
-  router.get('/adminRegister', function (req, res) {
-    res.render('adminRegister.njk');
+  router.get('/adminRegister', checkAuth, function (req, res) {
+    res.render('adminRegister.njk', { authenticated: true });
   });
 
-  router.post('/adminRegister', passport.authenticate('register', {
+  router.post('/adminRegister', checkAuth, passport.authenticate('register', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminRegister'
   }));
 
-  router.get('/adminReset', function (req, res) {
-    res.render('adminReset.njk');
+  router.get('/adminReset', checkAuth, function (req, res) {
+    res.render('adminReset.njk', { authenticated: true });
   });
 
-  router.post('/adminReset', passport.authenticate('reset', {
+  router.post('/adminReset', checkAuth, passport.authenticate('reset', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminReset'
   }));
 
   router.get('/badgein', function (req, res) {
-    res.render('badgein.njk');
+    res.render('badgein.njk', { authenticated: req.isAuthenticated() });
   });
 
   /* GET registration page. Should be directed here from /badgein if/when the
@@ -49,7 +49,7 @@ module.exports = function (passport) {
    *     for user to fill out. 
    * *******************************************************************************************/
   router.get('/registration/:badge', function (req, res) {
-    res.render('registration.njk');
+    res.render('registration.njk', { authenticated: req.isAuthenticated() });
   });
 
   /* POST registration page. Uses form data to create a new user in the database.
@@ -100,7 +100,7 @@ module.exports = function (passport) {
   });
 
   router.get('/badgeinSuccess', function (req, res) {
-    res.render('badgeinSuccess.njk');
+    res.render('badgeinSuccess.njk', { authenticated: req.isAuthenticated() });
   });
 
   router.post('/badgeinSuccess', jsonParser, function (req, res) {
@@ -115,24 +115,24 @@ module.exports = function (passport) {
     res.redirect('/');
   });
 
-  router.get('/userManagement', function (req, res) {
+  router.get('/userManagement', checkAuth, function (req, res) {
     dbAPI.getUsers('2000-01-01', '3000-01-01').then(function (ret) {
-      res.render('userManagement.njk', { obj: ret });
+      res.render('userManagement.njk', { obj: ret, authenticated: true });
     });
   });
 
-  router.post('/userManagement', function (req, res) {
+  router.post('/userManagement', checkAuth, function (req, res) {
     dbAPI.validateUser(req.body.userInput).then(function (ret) {
       console.log(ret.dataValues);
       res.render('userManagement.njk', { obj: [ret.dataValues] });
     });
   });
 
-  router.get('/stationManagement/:filter', jsonParser, getStnMngmnt);
+  router.get('/stationManagement/:filter', checkAuth, jsonParser, getStnMngmnt);
 
-  router.post('/stationManagement/:filter', jsonParser, postStnMngr, getStnMngmnt);
+  router.post('/stationManagement/:filter', checkAuth, jsonParser, postStnMngr, getStnMngmnt);
 
-  router.post('/userManagement/deleteUser/:badge', function (req, res) {
+  router.post('/userManagement/deleteUser/:badge', checkAuth, function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
     }
@@ -144,7 +144,7 @@ module.exports = function (passport) {
     res.redirect('/userManagement');
   });
 
-  router.post('/userManagement/confirmUser/:badge', function (req, res) {
+  router.post('/userManagement/confirmUser/:badge', checkAuth, function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
     }
@@ -160,7 +160,7 @@ module.exports = function (passport) {
     res.redirect('/userManagement');
   });
 
-  router.post('/userManagement/deletePrivilege/:badge/:station', function (req, res) {
+  router.post('/userManagement/deletePrivilege/:badge/:station', checkAuth, function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
     }
@@ -172,7 +172,7 @@ module.exports = function (passport) {
     res.redirect('/userManagement');
   });
 
-  router.post('/userManagement/grantPrivilege/:badge/:station', function (req, res) {
+  router.post('/userManagement/grantPrivilege/:badge/:station', checkAuth, function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
     }
@@ -208,7 +208,8 @@ function getStnMngmnt(req, res) {
 
   var data = {
     messageType: req.messageType,
-    message: req.message
+    message: req.message,
+    authenticated: true
   }
 
   //get results from database that match filter
