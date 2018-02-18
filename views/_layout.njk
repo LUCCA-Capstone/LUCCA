@@ -26,7 +26,7 @@
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand" href="#">EPL WEB APP</a>
+            <a class="navbar-brand" href="/">EPL WEB APP</a>
           </div> <!--navbar-header-->
 
           <!-- Collect the nav links and content for toggling -->
@@ -45,25 +45,36 @@
               </li>
               {% endblock %}
 
-              {% block AdminLogin %}
-              <li class="nav-item">
-                  <a class="nav-link" href="/adminLogin">Admin Login</a>
-              </li>
-              {% endblock %}
+              {% if not authenticated %}
+                {% block AdminLogin %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/adminLogin">Admin Login</a>
+                </li>
+                {% endblock %}
+              {% endif %}
 
               <!-- The adminManagement block should only be displayed (inherited) if an admin "session" is active -->
-              {% block adminManagement %}
-              <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Management</a>
-                  <div class="dropdown-menu" aria-labelledby="dropdown10">
-                    <a class="dropdown-item" href="/userManagement">User</a>
-                    <a class="dropdown-item" href="/stationManagement/all">Station</a>
-                  </div>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="#">Log Out</a>
-              </li>
-              {% endblock %} <!-- /end adminManagment block -->
+              {% if authenticated %}
+                {% block adminManagement %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Management</a>
+                    <div class="dropdown-menu" aria-labelledby="dropdown10">
+                      <a class="dropdown-item" href="/userManagement">User</a>
+                      <a class="dropdown-item" href="/stationManagement/all">Station</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown11" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                    <div class="dropdown-menu" aria-labelledby="dropdown11">
+                      <a class="dropdown-item" href="/adminRegister">Register new admin</a>
+                      <a class="dropdown-item" href="/adminReset">Change account password</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">Log Out</a>
+                </li>
+                {% endblock %} <!-- /end adminManagment block -->
+              {% endif %}
 
             </ul> <!-- /navbar-nav mr-auto -->
           </div> <!-- /navbarCollapse -->
