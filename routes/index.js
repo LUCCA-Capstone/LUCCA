@@ -40,9 +40,11 @@ module.exports = function (passport) {
     failureRedirect: '/adminReset'
   }));
 
+/*
   router.get('/badgein', function (req, res) {
     res.render('badgein.njk', { authenticated: req.isAuthenticated() });
   });
+*/
 
   /* GET registration page. Should be directed here from /badgein if/when the
    *     user badging in is not yet registered. Renders RISK liabilty form data
@@ -74,30 +76,9 @@ module.exports = function (passport) {
     });
     res.redirect('/badgein');
   });
+  router.get('/badgein', getBadgeIn);
+  router.post('/badgein', jsonParser, postBadgeIn, getBadgeIn);
 
-  router.post('/badgein', jsonParser, function (req, res) {
-    if (!req.body) {
-      return res.sendStatus(400);
-    }
-
-    var BadgeNumber = req.body.badgeNumber;
-
-    dbAPI.validateUser(BadgeNumber).then(function (result) {
-      console.log('BN = ' + BadgeNumber);
-
-      // this checks if the badge number is not in the database
-      if (result == undefined) {
-        // go to the registration page
-        res.redirect('/registration/' + BadgeNumber);
-      }
-
-      else {
-        console.log('You logged in succesfully');
-        console.log(BadgeNumber);
-        res.redirect('/badgeinSuccess');
-      }
-    });
-  });
 
   router.get('/badgeinSuccess', function (req, res) {
     res.render('badgeinSuccess.njk', { authenticated: req.isAuthenticated() });
@@ -213,9 +194,9 @@ function getStnMngmnt(req, res) {
   }
 
   //get results from database that match filter
-  dbAPI.getStations(filter).then(function(ret) {
+  dbAPI.getStations(filter).then(function (ret) {
     if (ret !== false && ret !== undefined) {
-      ret.sort(function(a,b) {
+      ret.sort(function (a, b) {
         return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
       });
       //display sorted array of stations, unregistered stations first
@@ -224,7 +205,7 @@ function getStnMngmnt(req, res) {
       //display error to user if no database using alert message on page
       data.obj = ret;
       data.messageType = 'error',
-      data.message = "There was a problem communicating with the database.\
+        data.message = "There was a problem communicating with the database.\
                       Please contact the DB administrator."
     }
     res.render('stationManagement.njk', data);
@@ -245,14 +226,14 @@ function postStnMngr(req, res, next) {
 
   req.messageType = "success"; //temporarily assume success!
 
-  if(req.body.delete === "true") {
+  if (req.body.delete === "true") {
     //delete station referenced by sId in body
-    dbAPI.deleteStation(req.body.sId).then(function(ret) {
+    dbAPI.deleteStation(req.body.sId).then(function (ret) {
       if (ret.result === true) {
         req.message = req.body.name + " has been successfully deleted.";
       } else {
         req.messageType = "error";
-        req.message = "Internal problem - unable to delete " + req.body.name + ".";        
+        req.message = "Internal problem - unable to delete " + req.body.name + ".";
       }
       next();
     });
@@ -274,4 +255,41 @@ function postStnMngr(req, res, next) {
       next();
     });
   }
+}
+
+function getBadgeIn(req, res) {
+  var data = {
+    messageType: req.messageType,
+    message: req.message
+  }
+
+  res.render('badgein.njk',data);
+}
+
+function postBadgeIn(req, res, next) {
+  if (!req.body) {
+    return res.sendStatus(400);
+  }
+
+  var BadgeNumber = req.body.badgeNumber;
+
+  dbAPI.validateUser(BadgeNumber).then(function (result) {
+    console.log('BN = ' + BadgeNumber);
+
+    // this checks if the badge number is not in the database
+    if (result == undefined) {
+
+     // go to the registration page
+      res.redirect('/registration/' + BadgeNumber);
+      
+    }
+    
+    else {
+      req.messageType = "success";
+      req.message = "You successfully Badge In";
+      
+      next();
+    }
+
+  });
 }
