@@ -27,8 +27,7 @@ nunjucks.configure('views',{
 
 app.set('view engine', 'nunjucks');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(session({ secret: 'my_secret_session_key' }));
 app.use(bodyParser.json());
