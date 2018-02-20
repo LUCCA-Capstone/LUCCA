@@ -128,4 +128,90 @@ router.post('/local-reset', function(req, res){
   }
 });
 
+//Usage:  Check stations current state.
+//Arguments:
+//         station-id - The id for the station which will be passed in the header of the request
+//Exceptions: 403 Forbidden
+//Description:  This function will look to see what status a station is
+// suppose to be in.  It will then return to the station whether it is suppose
+// to be disabled or enabled.  A response of 200 ok will be returned if all checks
+// are passed or a response of 403 Forbidden will be returned if any check fails.
+router.get('/last-state', function(req, res){
+  var cert = req.socket.getPeerCertificate();
+  var hObject = req.headers;
+  var sid = hObject['station-id'];
+
+  if(sid && cert.subject){
+    db.getStation(sid).then(results => {
+      if(results){
+        if(results['registered'] && cert.subject.CN === results['certCN']){
+          //Store station object
+          let obj = stationLog.getMachine(sid);
+
+          //If station was in shared cache return
+          //whether the station was enabled or disabled.
+          if(obj){
+            console.log(obj);
+            if(obj.status === 'enabled'){
+              db.logEvent('station-status request', 'Station: ' + sid + ' enabled and in use by: ' + obj.user).then(function(){
+                res.set({
+                  'Content-Type': 'text/plain',
+                  'station-state': 'enabled',
+                  'user-id-string': obj.user
+                });
+                console.log('obj found + enabled');
+                res.sendStatus(200);
+              });
+            }else{
+              db.logEvent('station-status request', 'Station: ' + sid + ' disabled.').then(function(){
+                res.set({
+                  'Content-Type': 'text/plain',
+                  'station-state': 'disabled',
+                });
+                console.log('obj found + disabled');
+                res.sendStatus(200);
+              });
+            }
+          //If station was not found add it to the stations
+          //shared cache and return status.
+          }else{
+            if(stationLog.addMachine(sid)){
+              db.logEvent('station-status request', 'Station: ' + sid + ' disabled and added to the cache.').then(function(){
+                res.set({
+                  'Content-Type': 'text/plain',
+                  'station-state': 'disabled',
+                });
+                console.log('Did we add something to the cache?');
+                res.sendStatus(200);
+              });
+            }else{
+              db.logEvent('station-status request', 'Station: ' + sid + ' has an unknown state and is unable to be add to cache').then(function(){
+                res.sendStatus(500);
+              });
+            }
+          }
+        }else{
+          db.logEvent('station-status request', 'Station: ' + sid + ' not registered').then(function(){
+            console.log('Not Reg');
+            res.sendStatus(403);
+          });
+        }
+      }else{
+        db.logEvent('station-status request', 'Station: ' + sid + ' cannot be found.').then(function(){
+          console.log('Empty Results');
+          res.sendStatus(403);
+        });
+      }
+    }).catch(err => {
+      db.logEvent('station-status request', err).then(function(){
+      console.log(err);
+      res.sendStatus(500);
+      });
+    });
+  }else{
+    console.log('No sid or Cert');
+    res.sendStatus(400);
+  }
+});
+
 module.exports = router;
