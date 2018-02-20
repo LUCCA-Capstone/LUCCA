@@ -1,6 +1,6 @@
 var LocalStrategy = require('passport-local').Strategy;
 var bCrypt = require('bcrypt-nodejs');
-var db = require('../database/controllers/dbm')
+var db = require('../database/controllers/dbm');
 
 var validPassword = function(user_pass, password){
   return bCrypt.compareSync(password, user_pass);

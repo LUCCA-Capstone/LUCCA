@@ -13,6 +13,7 @@ var login_strategy = require('./passport/login.js');
 var register_strategy = require('./passport/register.js');
 var reset_strategy = require('./passport/reset.js');
 var db = require('./database/controllers/dbm');
+var flash = require('express-flash');
 
 var index = require('./routes/index');
 var api = require('./routes/api');
@@ -20,7 +21,7 @@ var api = require('./routes/api');
 var app = express();
 
 // view engine setup
-nunjucks.configure('views',{
+nunjucks.configure('views', {
   autoescape: true,
   express: app
 });
@@ -29,23 +30,24 @@ app.set('view engine', 'nunjucks');
 
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
-app.use(session({ secret: 'my_secret_session_key' }));
+app.use(cookieParser('my_secret'));
+app.use(session({ secret: 'my_secret_session_key', cookie: { maxAge: 60000 } }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(flash());
 
 app.use('/', require('./routes/index')(passport));
 app.use('/api', api);
 
-passport.serializeUser(function(user, done) {
-  done(null, user.badge); 
+passport.serializeUser(function (user, done) {
+  done(null, user.badge);
 });
 
-passport.deserializeUser(function(id, done) {
-  db.validateUser(id).then(function(user){
+passport.deserializeUser(function (id, done) {
+  db.validateUser(id).then(function (user) {
     done(null, user);
   });
 });
@@ -55,14 +57,14 @@ passport.use('register', register_strategy);
 passport.use('reset', reset_strategy);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
