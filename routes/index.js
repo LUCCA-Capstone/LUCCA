@@ -319,7 +319,7 @@ function postBadgeIn(req, res, next) {
     else {
       req.messageType = "success";
       req.message = "You successfully Badge In";
-
+      dbAPI.logEvent("EPL Badge IN", BadgeNumber);
       next();
     }
 
