@@ -4,7 +4,7 @@ var path = require('path');
 var dbAPI = require('../database/controllers/dbm.js');
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
-
+const { check, validationResult } = require('express-validator/check');
 
 module.exports = function (passport) {
 
@@ -25,12 +25,27 @@ module.exports = function (passport) {
   }));
 
 
-  router.get('/adminRegister', checkAuth, function (req, res) {
+  router.get('/adminRegister', function (req, res) {
     res.render('adminRegister.njk', { authenticated: true });
   });
 
 
-  router.post('/adminRegister', checkAuth, passport.authenticate('register', {
+  router.post('/adminRegister', [
+    check('email')
+      .exists()
+      .isEmail().withMessage('Please enter valid email')
+      .trim()
+      .normalizeEmail(),
+
+    check('password')
+      .exists()
+      .isLength({ min: 8 })
+      .withMessage('Passwords must be at least 8 characters long'),
+
+    check('reenterpassword', 'Re-enter password field must have the same value as the password field')
+      .exists()
+      .custom((value, { req }) => value === req.body.password),
+  ], checkRegistration, passport.authenticate('register', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminRegister'
   }));
@@ -45,14 +60,6 @@ module.exports = function (passport) {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminReset'
   }));
-
-
-  /*
-    router.get('/badgein', function (req, res) {
-      res.render('badgein.njk', { authenticated: req.isAuthenticated() });
-    });
-  */
-
 
   /* GET registration page. Should be directed here from /badgein if/when the
    *     user badging in is not yet registered. Renders RISK liabilty form data
@@ -500,3 +507,15 @@ function getFilterClass(filter) {
   }
 }
 
+function checkRegistration(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    let mappedErrors = errors.mapped();
+    for (let val in mappedErrors) {
+      req.flash('error', mappedErrors[val]['msg']);
+    }
+    res.redirect('/adminRegister');
+  } else {
+    next();
+  }
+}

@@ -104,6 +104,14 @@
             </div>
           </div>
         </div> <!-- /alerts container -->
+        {% if messages.error %} 
+          {% for msg in messages.error%}
+          <div class="alert alert-danger alert-dismissible">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            {{msg}}
+          </div>
+          {% endfor %}
+        {% endif %}
       {% endblock %}
 
     <div class="container">
