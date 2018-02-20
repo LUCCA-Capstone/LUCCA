@@ -1,29 +1,117 @@
 var express = require('express');
 var db = require('../database/controllers/dbm');
+var config = require('../local_modules/config')
+var cache = require('../lib/cache');
 var router = express.Router();
 
-// log request
-router.use(function(req, res, next) {
-    console.log('%s %s', req.method, req.url);
-    next(); 
-});
+var timer = config.get('General', 'badge_override_interval')
 
 router.post('/user-access', function(req, res) {
-    var stationState = 'Enabled';
-    if(!req.body || req.body.length === 0 || req.body.length > 200) {
-        res.set({
-            'Content-Typer': 'text/plain',
-            'Station-State': stationState = 'Disabled'
-        });
-        res.status(403).send('Forbidden');
-    } else {
-        res.set({
-            'Content-Type': 'text/plain',
-            'User-Id-String': req.body.id,
-            'Station-State': stationState
-        });
-        res.status(200).send('OK');
-    }        
+	if(!req.body || req.body.length === 0 || req.body.length > 200) {
+		// body sanity check
+		res.set({
+				'Content-Type': 'text/plain',
+				'Station-State': 'Disabled'
+		});
+		res.sendStatus(403);
+	};
+
+	if(!req.headers.badge || !req.headers.sid || !req.headers['station-state']) {
+		// check the necessary headers are provided for future processing
+		res.sendStatus(403);
+	};
+
+	// TODO check if user is already logged in to another machine
+	// the piece can be extracted because if the user is on another
+	// machine then there is no need to perform all the checks
+	// this will *might* require a module that contains all users
+	// currently loogged into a machine.
+	
+	var headerObj = req.headers;
+
+	db.getStation(headerObj.sid).then(function(station) {
+		//check if machine is in database
+		!station ? res.sendStatus(403) : console.log(station);
+		db.validateUser(headerObj.badge).then(function(user) {
+			//check if user accesing machine exist
+		 	!user ? res.sendStatus(403) : console.log(user);
+			if (user.dataValues.status === 'Admin') {
+				!user.dataValues.status ? res.sendStatus(503) : console.log(user.dataValues.status)
+				// check cache to see if there is a user on the machine
+				var userWaiting = cache.getMachine(headerObj.sid, timer);
+				if (userWaiting === null && headerObj['station-state'] === 'disabled') {
+					//there is no user in cache and the machine is 'disabled'
+					//put the admin on the machine	
+					// call station module HERE //to update station with current user and change to enabled
+					res.set({
+						'Content-Type': 'text/plain',
+						'Station-State': 'enabled',
+						'badge':  headerObj.badge
+					});
+					res.sendStatus(200);
+				} else if (headerObj['station-state'] === 'enabled') {
+					//assumption is the admin is logging of from the machine
+					res.set({
+						'Content-Type': 'text/plain',
+						'Station-State': 'disabled'
+					});
+					res.sendStatus(200);
+				} else {
+					// grant privilages to the user	
+					db.grantPrivileges(userWaiting, headerObj.sid).then(function(result) {
+						cache.delete(headerObj.sid);
+						//call station module HERE //to update station with current user and change to enabled
+						res.set("Connection", "close");
+						!result ? res.sendStatus(403) : res.set({
+																							'Content-Type': 'text/plain',
+																							'Station-state': 'enabled', 
+																							'badge': userWaiting
+																						});
+						// remove user from module
+						res.sendStatus(200);
+					});
+				};
+			} else if (user.dataValues.status === 'User' || user.dataValues.status === 'Manager') {
+				// handle user
+				// Assumption is the user is logging off the machine
+				//this needs to check if a user is on the machine
+				if (headerObj['station-state'] === 'enabled') {
+					// call station module HERE //to update station disabled and remove user
+					res.set({
+						'Content-Type': 'text/plain',
+						'Station-State': 'disabled'
+					});
+					res.sendStatus(200);
+				} else {
+					db.getPrivileges(headerObj.badge).then(function(obj) {
+						if (obj) {
+							for (let element of obj) {
+								if (element.sId === headerObj.sid) {
+									res.set({
+										'Content-Type': 'text/plain',
+										'Station-State': 'enabled',
+										'badge': headerObj.badge
+									});
+									return res.sendStatus(200);
+									// call station module HERE //to update station with current user and change to enabled
+								}; 	
+							};
+							// user does not have access to this machine put them in cache
+							let check = cache.save(headerObj.sid, headerObj.badge);
+							res.sendStatus(200);
+						} else {
+							// user does not have access to any machines put them in cache
+							let check = cache.save(headerObj.sid, headerObj.badge);
+							res.sendStatus(200);
+						}
+					});
+				};
+			} else {
+				// Unusable data is returned from database
+				res.sendStatus(503);
+			};
+		});
+	});
 });
 
 router.post('/station-heartbeat', function(req, res) {
