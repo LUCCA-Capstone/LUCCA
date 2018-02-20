@@ -13,38 +13,46 @@ module.exports = function (passport) {
     res.render('HomePage.njk', { authenticated: req.isAuthenticated() });
   });
 
+
   router.get('/adminLogin', function (req, res) {
     res.render('adminLogin.njk', { authenticated: req.isAuthenticated() });
   });
+
 
   router.post('/adminLogin', passport.authenticate('login', {
     successRedirect: '/',
     failureRedirect: '/adminLogin'
   }));
 
+
   router.get('/adminRegister', checkAuth, function (req, res) {
     res.render('adminRegister.njk', { authenticated: true });
   });
+
 
   router.post('/adminRegister', checkAuth, passport.authenticate('register', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminRegister'
   }));
 
+
   router.get('/adminReset', checkAuth, function (req, res) {
     res.render('adminReset.njk', { authenticated: true });
   });
+
 
   router.post('/adminReset', checkAuth, passport.authenticate('reset', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminReset'
   }));
 
+
   /*
     router.get('/badgein', function (req, res) {
       res.render('badgein.njk', { authenticated: req.isAuthenticated() });
     });
   */
+
 
   /* GET registration page. Should be directed here from /badgein if/when the
    *     user badging in is not yet registered. Renders RISK liabilty form data
@@ -53,6 +61,7 @@ module.exports = function (passport) {
   router.get('/registration/:badge', function (req, res) {
     res.render('registration.njk', { authenticated: req.isAuthenticated() });
   });
+
 
   /* POST registration page. Uses form data to create a new user in the database.
    *      temporarily outputs the results of dbAPI method to console until alerts can be added.
@@ -76,13 +85,18 @@ module.exports = function (passport) {
     });
     res.redirect('/badgein');
   });
+
+
   router.get('/badgein', getBadgeIn);
+
+
   router.post('/badgein', jsonParser, postBadgeIn, getBadgeIn);
 
 
   router.get('/badgeinSuccess', function (req, res) {
     res.render('badgeinSuccess.njk', { authenticated: req.isAuthenticated() });
   });
+
 
   router.post('/badgeinSuccess', jsonParser, function (req, res) {
     if (!req.body) {
@@ -91,16 +105,19 @@ module.exports = function (passport) {
     res.redirect('/badgein');
   });
 
+
   router.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
   });
+
 
   router.get('/userManagement', checkAuth, function (req, res) {
     dbAPI.getUsers('2000-01-01', '3000-01-01').then(function (ret) {
       res.render('userManagement.njk', { obj: ret, authenticated: true });
     });
   });
+
 
   router.post('/userManagement', checkAuth, function (req, res) {
     dbAPI.validateUser(req.body.userInput).then(function (ret) {
@@ -109,9 +126,18 @@ module.exports = function (passport) {
     });
   });
 
+
   router.get('/stationManagement/:filter', checkAuth, jsonParser, getStnMngmnt);
 
+
   router.post('/stationManagement/:filter', checkAuth, jsonParser, postStnMngr, getStnMngmnt);
+  
+
+  router.get('/eventsLog/:class', checkAuth, jsonParser, getEvents);
+  
+
+  router.post('/eventsLog/:class', checkAuth, jsonParser, postEvents, getEvents);
+
 
   router.post('/userManagement/deleteUser/:badge', checkAuth, function (req, res) {
     if (!req.body) {
@@ -124,6 +150,7 @@ module.exports = function (passport) {
     });
     res.redirect('/userManagement');
   });
+
 
   router.post('/userManagement/confirmUser/:badge', checkAuth, function (req, res) {
     if (!req.body) {
@@ -141,6 +168,7 @@ module.exports = function (passport) {
     res.redirect('/userManagement');
   });
 
+
   router.post('/userManagement/deletePrivilege/:badge/:station', checkAuth, function (req, res) {
     if (!req.body) {
       return res.sendStatus(400);
@@ -152,6 +180,7 @@ module.exports = function (passport) {
     });
     res.redirect('/userManagement');
   });
+
 
   router.post('/userManagement/grantPrivilege/:badge/:station', checkAuth, function (req, res) {
     if (!req.body) {
@@ -168,6 +197,7 @@ module.exports = function (passport) {
 
   return router;
 }
+
 
 var checkAuth = function (req, res, next) {
   if (req.isAuthenticated())
@@ -204,8 +234,8 @@ function getStnMngmnt(req, res) {
     } else {
       //display error to user if no database using alert message on page
       data.obj = ret;
-      data.messageType = 'error',
-        data.message = "There was a problem communicating with the database.\
+      data.messageType = 'error';
+      data.message = "There was a problem communicating with the database.\
                       Please contact the DB administrator."
     }
     res.render('stationManagement.njk', data);
@@ -246,7 +276,6 @@ function postStnMngr(req, res, next) {
     dbAPI.modifyStation(req.body.sId, req.body).then(function (ret) {
       //prepare to pass success message to next()
       if (ret.result === true) {
-        //req.message = "Successfully updated " + req.body.name + ".";
         req.message = req.body.name + " has been succesfully updated.";
       } else {
         req.messageType = "error";
@@ -257,6 +286,7 @@ function postStnMngr(req, res, next) {
   }
 }
 
+
 function getBadgeIn(req, res) {
   var data = {
     messageType: req.messageType,
@@ -266,6 +296,7 @@ function getBadgeIn(req, res) {
 
   res.render('badgein.njk', data);
 }
+
 
 function postBadgeIn(req, res, next) {
   if (!req.body) {
@@ -294,3 +325,88 @@ function postBadgeIn(req, res, next) {
 
   });
 }
+
+
+/*getEvents will render a table of all events that match the query parameter passed on this GET request.
+  *    If req.params.class parameter matches an event class, on that those types of events will be displayed.
+  *    Otherwise, all events will be displayed sorted with the most recent events first.
+  *    If "messageType" and "message" are defined in req, it will trigger alert message passing in DOM.
+  *********************************************************************************************************/
+function getEvents(req, res) {
+  var filterClass = getFilterClass(req.params.class);
+  var data = {
+    messageType: req.messageType,
+    message: req.message,
+    authenticated: true
+  }
+
+  dbAPI.getEvents(filterClass).then(function (ret) {
+    //if array of results returned from database, sort with most recent date at top
+    if (Array.isArray(ret)) {
+      ret.sort(function (a, b) {
+        return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
+      });
+    }
+    
+    //display error to user if no database using alert message on page
+    data.obj = ret;
+    res.render('eventsLog.njk', data);
+  }).
+  catch(err => {
+    data.messageType = "error";
+    data.message = "Internal connection problem. Please contact the DB administrator.";
+    res.render('eventsLog.njk', data);
+  });
+};
+
+
+/*postEvents will delete the event that corresponds to req.body.id in this POST, if it exists.
+ *     Upon completion, will call "next" function to GET and display revised list of log entries.
+ *     Implements message passing: signals success or failure to "next" in "req.messageType" and "req.message"
+ ***************************************************************************************************************/
+function postEvents(req, res, next) {
+  if (!req.body) {
+    //400 Bad Request
+    return res.sendStatus(400);
+  }
+  
+  req.messageType = "success"; //temporarily assume success!
+
+    //delete station referenced by sId in body
+    dbAPI.deleteEvent(req.body.id).then(function (ret) {
+      if (ret.result === true) {
+        req.message = "Log entry " + req.body.id + " has been deleted.";
+      } else {
+        req.messageType = "error";
+        req.message = "Unable to delete " + req.body.id + ". \n" + ret.detail;
+      }
+      next();
+    }).
+    catch(err => {
+      data.messageType = "error";
+      data.message = "Internal connection problem. Please contact the DB administrator.";
+      next();
+    });
+}
+
+
+//Simple helper function returns event class type that corresponds to filter
+function getFilterClass(filter) {
+  switch(filter) {
+    case "badgeIn":
+        return "EPL Badge IN";
+    case "generic":
+        return "generic_event";
+    case "different":
+        return "different_event";
+    case "statusReq":
+        return "station-status request";
+    case "stnReset":
+        return "station-reset";
+    case "stnMngmnt":
+        return "station management";
+    default:
+        return undefined;
+  }
+}
+

@@ -25,6 +25,7 @@ describe('Page status', function () {
     });
   });
 
+
   describe('Admin login page', function() {
     it('status', function(done) {
       request('/adminLogin',
@@ -37,6 +38,7 @@ describe('Page status', function () {
       );
     });
   });
+
 
   describe('Badge-in page', function() {
     it('status', function(done) {
@@ -51,6 +53,7 @@ describe('Page status', function () {
     });
   });
 
+
   describe('User registration page', function() {
     it('status', function(done) {
       request('/registration/00001', 
@@ -63,6 +66,7 @@ describe('Page status', function () {
     });
   });
   
+
   describe('Badge-in Success page', function() {
     it('status', function(done) {
       request('/badgeinSuccess',
@@ -74,6 +78,7 @@ describe('Page status', function () {
       });
     });
   });
+
 
   describe('User Management page', function() {
     it('status', function(done) {
@@ -87,6 +92,7 @@ describe('Page status', function () {
     });
   });
 
+
   describe('Admin create new account', function() {
     it('status', function(done) {
       request('/adminRegister',
@@ -98,6 +104,7 @@ describe('Page status', function () {
       });
     });
   });
+
 
   describe('Admin reset account', function() {
     it('status', function(done) {
@@ -111,6 +118,7 @@ describe('Page status', function () {
     });
   });
 
+
   describe('Station management page', function() {
     it('status of all results', function(done) {
       request('/stationManagement/all',
@@ -121,6 +129,7 @@ describe('Page status', function () {
         done();
       });
     });
+
     it('status of registered stations results', function(done) {
       request('/stationManagement/registered',
         options,
@@ -130,8 +139,82 @@ describe('Page status', function () {
         done();
       });
     });
+
     it('status of unregistered stations results', function(done) {
       request('/stationManagement/unregistered',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+  });
+
+
+  describe('Events log', function() {
+    it('should return 200 status for displaying all events', function(done) {
+      request('/eventsLog/all',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying EPL Badge IN events', function(done) {
+      request('/eventsLog/badgeIn',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying generic_event events', function(done) {
+      request('/eventsLog/generic',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying different_event events', function(done) {
+      request('/eventsLog/different',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying station-status request events', function(done) {
+      request('/eventsLog/statusReq',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying station-reset events', function(done) {
+      request('/eventsLog/stnReset',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response .statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 200 status for displaying station management events', function(done) {
+      request('/eventsLog/stnMngmnt',
         options,
         function(error, response, body) {
         if (error) { console.error(error); }
