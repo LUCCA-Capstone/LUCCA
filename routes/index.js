@@ -40,11 +40,11 @@ module.exports = function (passport) {
     failureRedirect: '/adminReset'
   }));
 
-/*
-  router.get('/badgein', function (req, res) {
-    res.render('badgein.njk', { authenticated: req.isAuthenticated() });
-  });
-*/
+  /*
+    router.get('/badgein', function (req, res) {
+      res.render('badgein.njk', { authenticated: req.isAuthenticated() });
+    });
+  */
 
   /* GET registration page. Should be directed here from /badgein if/when the
    *     user badging in is not yet registered. Renders RISK liabilty form data
@@ -260,10 +260,11 @@ function postStnMngr(req, res, next) {
 function getBadgeIn(req, res) {
   var data = {
     messageType: req.messageType,
-    message: req.message
+    message: req.message,
+    authenticated: req.isAuthenticated()
   }
 
-  res.render('badgein.njk',data);
+  res.render('badgein.njk', data);
 }
 
 function postBadgeIn(req, res, next) {
@@ -279,15 +280,15 @@ function postBadgeIn(req, res, next) {
     // this checks if the badge number is not in the database
     if (result == undefined) {
 
-     // go to the registration page
+      // go to the registration page
       res.redirect('/registration/' + BadgeNumber);
-      
+
     }
-    
+
     else {
       req.messageType = "success";
       req.message = "You successfully Badge In";
-      
+
       next();
     }
 
