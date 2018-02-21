@@ -3,10 +3,13 @@ var config = require('./local_modules/config');
 var router = express.Router({
 });
 
+var bodyParser = require('body-parser');
+
 var api = require('./routes/api');
 
 var app = express();
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api', api);
 
 app.use(function(req, res, next) {
