@@ -1,31 +1,270 @@
 var express = require('express');
 var db = require('../database/controllers/dbm');
+var cache = require('../lib/cache');
+var config = require('../local_modules/config');
 var stationLog = require('../lib/station-log');
 var router = express.Router();
 
-// log request
-router.use(function(req, res, next) {
-    console.log('%s %s', req.method, req.url);
-    next(); 
+// returns timer used for caching
+var timer = config.get('General', 'badge_override_interval')
+
+router.post('/user-access', function(req, res, next) {
+  if(!req.body || req.body.length === 0 || req.body.length > 200) {
+		res.set({
+				'Content-Type': 'text/plain',
+    });
+		return res.sendStatus(400);
+	};
+
+	if(!req.headers['station-id'] || !req.headers['station-state']) {
+		return res.sendStatus(400);
+  };
+
+  var headerObj = req.headers;
+  var bodyObj = req.body;
+  var cert = req.socket.getPeerCertificate();
+  // Until a better solution is found this is used for chai testing
+  if (Object.keys(cert).length === 0) {
+    cert = {
+      'subject': {
+        'CN' : 'localhost:3001'
+      }
+    }
+  };
+  db.getStation(headerObj['station-id']).then(function(station) {
+    if(!station) {
+      return res.sendStatus(403);
+    } 
+    else if (!station.registered) {
+      if (station.certCN !== cert.subject.CN) {
+        db.modifyStation(headerObj['station-id'], {certCN: cert.subject.CN}).then(function(response) {
+          db.logEvent('station management', "Heartbeat for unregistered station with ID '" + headerObj['station-id'] + "' provided a new station CN. Changing to '" + cert.subject.CN + "'");
+        });
+      }
+      return res.sendStatus(403); 
+    }
+    else if (station.certCN !== cert.subject.CN) {
+      db.logEvent('station management', "Heartbeat for station with ID '" + stationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").then(function(response) {
+      });
+      return res.sendStatus(403);
+    } 
+    var checkMachine = stationLog.getMachine(headerObj['station-id']);
+    if(checkMachine === null) {
+      checkMachine = stationLog.addMachine(headerObj['station-id']);
+    };
+    var userWaiting = cache.getMachine(headerObj['station-id'], timer);
+
+    db.validateUser(bodyObj.badge).then(function(person) {
+      if(!person) {
+        return res.sendStatus(403);
+      }
+      else if (person.dataValues.status === 'Admin') {
+        res.locals.obj = {
+          'status': person.dataValues.status,
+          'user': person.dataValues.last+','+person.dataValues.first, 
+          'badge': person.dataValues.badge,
+          'destination': null, 
+          'userInCache': null,
+          'access': true
+        };
+        if(userWaiting && headerObj['station-state'] === 'disabled'){
+          res.locals.obj.destination = 'cache',
+          res.locals.obj.userInCache = userWaiting;
+          next();
+        } else {
+         res.locals.obj.destination = 'log';
+         next(); 
+        }
+      } 
+      else if (person.dataValues.status === 'Manager') {
+        res.locals.obj = {
+          'status': person.dataValues.status,
+          'user': person.dataValues.last+','+person.dataValues.first, 
+          'badge': person.dataValues.badge,
+          'destination': null, 
+          'userInCache': null,
+          'access': false
+        };
+        if(userWaiting && headerObj['station-state'] === 'disabled') {
+          db.getPrivileges(bodyObj.badge).then(function(privs) {
+            var canLogOntoMachine = false;
+            if(!privs) {
+              return res.sendStatus(403);
+            }
+            else {
+              for(let element of privs) {
+                if(element.sId === headerObj['station-id']) {res.locals.obj.access = true;}
+              };
+              if(res.locals.obj.access) {
+                res.locals.obj.destination = 'cache'
+                res.locals.obj.userInCache = userWaiting
+                next();
+              } else {
+                return res.sendStatus(403);
+              };  
+            };
+          }).catch((error) => {
+            return res.sendStatus(500, error);
+          });
+        } else if (userWaiting === null && headerObj['station-state'] === 'disabled') {
+          db.getPrivileges(bodyObj.badge).then(function(privs) {
+            var canLogOntoMachine = false;
+            if(!privs) {
+              res.locals.obj.destination = 'cache';
+              next();
+            }
+            else {
+              for(let element of privs) {
+                if(element.sId === headerObj['station-id']) {
+                  canLogOntoMachine = true;
+                };
+              } 
+              if(canLogOntoMachine) {
+                res.locals.obj.destination = 'log';
+                next();
+              } else {
+                res.locals.obj.destination = 'cache';
+                next();
+              } 
+            }
+          }).catch((error) => {
+            return res.sendStatus(500, error);
+          });
+        } else {
+          res.locals.obj.destination = 'log';
+          next();
+        }
+      }
+      else if (person.dataValues.status === 'User') {
+        res.locals.obj = {
+          'status': person.dataValues.status,
+          'user': person.dataValues.last+','+person.dataValues.first, 
+          'badge': person.dataValues.badge,
+          'destination': null,
+          'access': false
+        };
+        db.getPrivileges(bodyObj.badge).then(function(privs) {
+          var canLogOntoMachine = false;
+          if(!privs) {
+            res.locals.obj.destination = 'cache'
+            next();
+          }
+          else {
+            for(let element of privs) {
+              if(element.sId === headerObj['station-id']) {canLogOntoMachine = true;}
+            };
+            if(canLogOntoMachine) {
+              res.locals.obj.destination = 'log'
+              next();
+            } else {
+              res.locals.obj.destination = 'cache'
+              next();
+            };  
+          };
+        }).catch((error) => {
+          return res.sendStatus(500, error);
+        });
+      } else {
+        return res.sendStatus(403);
+      }
+    }).catch((error) => {
+        return res.sendStatus(500, error);
+    });
+  }).catch((error) => {
+      return res.sendStatus(500, error);
+  });
 });
 
-router.post('/user-access', function(req, res) {
-    var stationState = 'Enabled';
-    if(!req.body || req.body.length === 0 || req.body.length > 200) {
-        res.set({
-            'Content-Typer': 'text/plain',
-            'Station-State': stationState = 'Disabled'
-        });
-        res.status(403).send('Forbidden');
-    } else {
-        res.set({
-            'Content-Type': 'text/plain',
-            'User-Id-String': req.body.id,
-            'Station-State': stationState
-        });
-        res.status(200).send('OK');
-    }        
+
+//handle cache
+router.post('/user-access', function(req, res, next) {
+  if(res.locals.obj.destination === 'cache' && res.locals.obj.access && (res.locals.obj.status === 'Admin' || res.locals.obj.status === 'Manager')){
+    let anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
+    let amIonMoreThanOneMachine = stationLog.getAll();
+    if(anyOneOnMachine.badge !== null) {
+      return res.sendStatus(403);
+    }
+    for(element in amIonMoreThanOneMachine) {
+      if (amIonMoreThanOneMachine[element].badge === res.locals.obj.userInCache['badge']) {
+        return res.sendStatus(403);
+      };
+    };
+    db.grantPrivileges(res.locals.obj.userInCache['badge'], req.headers['station-id']).then(function(approval) {
+      cache.delete(req.headers['station-id']);
+      stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
+      res.set({
+        'Content-Type': 'text/plain',
+        'station-state': 'enabled',
+        'User-ID-String': res.locals.obj.userInCache['user']
+      })
+      return res.sendStatus(200);
+    });
+  } 
+  else if(res.locals.obj.destination === 'cache' && !res.locals.obj.access) {
+    let amIonMoreThanOneMachine = stationLog.getAll();
+    let anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
+    if(anyOneOnMachine.badge !== null) {
+      return res.sendStatus(403);
+    }
+    for(element in amIonMoreThanOneMachine) {
+      if (amIonMoreThanOneMachine[element].badge === res.locals.obj.badge) {
+        return res.sendStatus(403);
+      };
+    };
+    cache.save(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
+    return res.sendStatus(403);
+  } else {
+    next();
+  };
 });
+
+
+// handle log on
+router.post('/user-access', function(req, res, next) {
+  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'disabled') {
+    var anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
+    var amIonMoreThanOneMachine = stationLog.getAll();
+    for(element in amIonMoreThanOneMachine) {
+      if (amIonMoreThanOneMachine[element].badge === res.locals.obj.badge) {
+        return res.sendStatus(403);
+      };
+    };
+    if(anyOneOnMachine.user === null) {
+      stationLog.addUser(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
+      res.set({
+        'Content-Type': 'text/plain',
+        'station-state': 'enabled',
+        'User-ID-String': res.locals.obj.user
+      });
+      return res.sendStatus(200);
+    } else {
+      return res.sendStatus(403);
+    }
+  } 
+  next();
+});
+
+
+//handle log off
+router.post('/user-access', function(req, res, next) {
+  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'enabled') {
+    var amIonThisMachine = stationLog.getMachine(req.headers['station-id']);
+    if(amIonThisMachine.badge === res.locals.obj.badge) {
+      stationLog.removeUser(res.locals.obj.badge, req.headers['station-id']);
+      res.set({
+        'Content-Type': 'text/plain',
+        'station-state': 'disabled',
+      });
+      return res.sendStatus(200);
+    } else {
+      return res.sendStatus(403);
+    }
+  } 
+  else {
+    res.sendStatus(403);
+  }
+});
+
 
 router.post('/station-heartbeat', function(req, res) {
   var headerObj = req.headers;
