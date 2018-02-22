@@ -131,10 +131,10 @@ module.exports = function (passport) {
 
 
   router.post('/stationManagement/:filter', checkAuth, jsonParser, postStnMngr, getStnMngmnt);
-  
+
 
   router.get('/eventsLog/:class', checkAuth, jsonParser, getEvents);
-  
+
 
   router.post('/eventsLog/:class', checkAuth, jsonParser, postEvents, getEvents);
 
@@ -196,7 +196,61 @@ module.exports = function (passport) {
   });
 
 
-  router.get('/userManagement/:badge', checkAuth, function(req,res){
+  router.post('/userManagement/promoteUser/:badge', checkAuth, function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+
+    dbAPI.validateUser(BagdeID).then(function (ret) {
+      console.log(ret.dataValues);
+      console.log("USER STATUS " + ret.status);
+
+      if (ret.status == "User" && ret.status != "Admin") {
+        dbAPI.modifyUser(BagdeID, { status: "Manager" }).then(function (result) {
+          if (result == undefined) {
+            console.log("Error");
+          }
+          else {
+            console.log("promotion changed successfully");
+          }
+        });
+      }
+      res.redirect('/userManagement');
+
+    });
+
+  });
+
+
+  router.post('/userManagement/demoteManager/:badge', checkAuth, function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+
+    dbAPI.validateUser(BagdeID).then(function (ret) {
+      console.log(ret.dataValues);
+      console.log("USER STATUS " + ret.status);
+
+      if (ret.status == "Manager" && ret.status != "Admin") {
+        dbAPI.modifyUser(BagdeID, { status: "User" }).then(function (result) {
+          if (result == undefined) {
+            console.log("Error");
+          }
+          else {
+            console.log("demotion changed successfully");
+          }
+        });
+      }
+      res.redirect('/userManagement');
+
+    });
+
+  });
+
+
+  router.get('/userManagement/:badge', checkAuth, function (req, res) {
     var BadgeNumber = req.params.badge;
     //dbAPI.grantPrivileges(BadgeNumber, '1');
     Promise.all([
@@ -204,31 +258,31 @@ module.exports = function (passport) {
       dbAPI.getPrivileges(BadgeNumber),
       dbAPI.validateUser(BadgeNumber)
     ])
-    .then(
-      ([allStations,trainedStation,userInfo])=>{
-        var flag = new Boolean(false);
-        for(var i = 0; i < allStations.length; ++i){
-          for(var j = 0; j < trainedStation.length; ++j){
-            if (allStations[i].sId === trainedStation[j].sId){
-              allStations[i].trained = true;
-              flag = true;
+      .then(
+        ([allStations, trainedStation, userInfo]) => {
+          var flag = new Boolean(false);
+          for (var i = 0; i < allStations.length; ++i) {
+            for (var j = 0; j < trainedStation.length; ++j) {
+              if (allStations[i].sId === trainedStation[j].sId) {
+                allStations[i].trained = true;
+                flag = true;
+              }
             }
+            if (flag != true) {
+              allStations[i].trained = false;
+            }
+            flag = false;
           }
-          if(flag != true){
-            allStations[i].trained = false;
-          }
-          flag = false;
+          console.log(allStations);
+          res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations });
         }
-        console.log(allStations);
-        res.render('userManagementBadge.njk', {authenticated: true, user: userInfo.dataValues, allStations});  
-      }
-    )
-    .catch(
-      err=>{
-        console.warn("something went wrong:",err);
-        res.status(500).send(err);
-      }
-    );
+      )
+      .catch(
+        err => {
+          console.warn("something went wrong:", err);
+          res.status(500).send(err);
+        }
+      );
   });
 
   return router;
@@ -383,16 +437,16 @@ function getEvents(req, res) {
         return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
       });
     }
-    
+
     //display error to user if no database using alert message on page
     data.obj = ret;
     res.render('eventsLog.njk', data);
   }).
-  catch(err => {
-    data.messageType = "error";
-    data.message = "Internal connection problem. Please contact the DB administrator.";
-    res.render('eventsLog.njk', data);
-  });
+    catch(err => {
+      data.messageType = "error";
+      data.message = "Internal connection problem. Please contact the DB administrator.";
+      res.render('eventsLog.njk', data);
+    });
 };
 
 
@@ -405,19 +459,19 @@ function postEvents(req, res, next) {
     //400 Bad Request
     return res.sendStatus(400);
   }
-  
+
   req.messageType = "success"; //temporarily assume success!
 
-    //delete station referenced by sId in body
-    dbAPI.deleteEvent(req.body.id).then(function (ret) {
-      if (ret.result === true) {
-        req.message = "Log entry " + req.body.id + " has been deleted.";
-      } else {
-        req.messageType = "error";
-        req.message = "Unable to delete " + req.body.id + ". \n" + ret.detail;
-      }
-      next();
-    }).
+  //delete station referenced by sId in body
+  dbAPI.deleteEvent(req.body.id).then(function (ret) {
+    if (ret.result === true) {
+      req.message = "Log entry " + req.body.id + " has been deleted.";
+    } else {
+      req.messageType = "error";
+      req.message = "Unable to delete " + req.body.id + ". \n" + ret.detail;
+    }
+    next();
+  }).
     catch(err => {
       data.messageType = "error";
       data.message = "Internal connection problem. Please contact the DB administrator.";
@@ -428,21 +482,21 @@ function postEvents(req, res, next) {
 
 //Simple helper function returns event class type that corresponds to filter
 function getFilterClass(filter) {
-  switch(filter) {
+  switch (filter) {
     case "badgeIn":
-        return "EPL Badge IN";
+      return "EPL Badge IN";
     case "generic":
-        return "generic_event";
+      return "generic_event";
     case "different":
-        return "different_event";
+      return "different_event";
     case "statusReq":
-        return "station-status request";
+      return "station-status request";
     case "stnReset":
-        return "station-reset";
+      return "station-reset";
     case "stnMngmnt":
-        return "station management";
+      return "station management";
     default:
-        return undefined;
+      return undefined;
   }
 }
 

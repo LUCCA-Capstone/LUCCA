@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block customCSS %}
-<link rel="stylesheet" href="/stylesheets/userManagement.css">
+<!--link rel="stylesheet" href="/stylesheets/userManagement.css"-->
 {% endblock %}
 
 {% block content %}
@@ -62,11 +62,22 @@
     </tr>
     <tr>
         <th></th>
-        {% if user.confirmation %}
+        {% if user.confirmation  %}
             <td>
                 <form id="deleteForm" action="/userManagement/deleteUser/{{user.badge}}" method="post" onsubmit="return confirm('This user will be deleted!')">
                 <button type='submit' class="btn btn-primary" name='submit' value="">Delete</button>
                 </form>
+                <br>
+            {% if user.status == "User"%}
+                <form id="ChangeStatusToManager" action="/userManagement/promoteUser/{{user.badge}}" method="post" onsubmit="return confirm('This user will be Manager!')">        
+                <button type='submit' class="btn btn-primary" name='submit' value="">Promote to Manager</button>
+                </form>
+            {% elif user.status == "Manager" %}
+                <form id="ChangeStatusToManager" action="/userManagement/demoteManager/{{user.badge}}" method="post" onsubmit="return confirm('This user will be User!')">
+                <button type='submit' class="btn btn-primary" name='submit' value="">Demote to User</button>
+                </form>
+            {% endif %}
+
             </td>
         {% else %}
             <td>

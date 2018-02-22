@@ -90,6 +90,16 @@ describe('Page status', function () {
         done();
       });
     });
+
+    it('status', function(done) {
+      request('/userManagement/00001',
+        options,
+        function(error, response, body) {
+        if (error) { console.error(error); }
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
   });
 
 
