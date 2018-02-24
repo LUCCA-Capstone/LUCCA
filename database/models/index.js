@@ -4,15 +4,25 @@ var fs = require('fs');
 var path = require('path');
 var Sequelize = require('sequelize');
 var basename = path.basename(__filename);
-var env = process.env.NODE_ENV || 'development';
-var config = require(__dirname + '/../config/config.json')[env];
-var db = {};
+var config = require(__dirname + '/../../local_modules/config');
+var user = config.get('Database', 'username');
+var database = config.get('Database', 'database');
+var password = config.get('Database', 'password');
+var loggingSetting = config.get('Database', 'logging');
 
-if (config.use_env_variable) {
-  var sequelize = new Sequelize(process.env[config.use_env_variable]);
-} else {
-  var sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
+if(loggingSetting === 'false')
+  loggingSetting = false;
+else
+  loggingSetting = true;
+
+var configurations = {
+  host: config.get('Database', 'host'),
+  dialect: config.get('Database', 'dialect'),
+  port: config.get('Database', 'port'),
+  logging: loggingSetting
+};
+var db = {};
+var sequelize = new Sequelize(database, user, password, configurations);
 
 fs
   .readdirSync(__dirname)
