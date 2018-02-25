@@ -120,12 +120,13 @@ def validate_response(response, request, assertions):
     print("Response valid, all constraints met (status code {0})".format(response.status_code))
     return True
 
-def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], **kwargs):
+def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controller'], station_id=_defaults['station_id'], user_id=_defaults['user_id'], active=False, **kwargs):
   """
   Send a user-access API action, as detailed in section 4.2. of the station API specification
   """
   schema = 'https://' if use_ssl else 'http://'
-  headers={ 'Station-ID' : station_id }
+  headers={ 'Station-ID' : station_id,
+            'Station-State' : 'Enabled' if active else 'Disabled' }
   s = requests.Session()
   req = requests.Request('POST', schema + controller + '/api/user-access', data=user_id, headers=headers)
   prep = req.prepare()
@@ -292,6 +293,7 @@ if __name__ == '__main__':
   parser.add_argument('-u', '--user-id', dest='user_id', default=_defaults['user_id'], help="User ID token (not display name), passed as the request body for user-access actions. Ignored when specified with other action types.")
   parser.add_argument('-t', '--timeout', dest='timeout', default=_defaults['timeout'], help="Request timeout duration for HTTP requests used to invoke API actions. [default: 2.0 sec]")
   parser.add_argument('--no-verify', dest='verify', const=False, action='store_const', default=True)
+  parser.add_argument('--station-active', dest='active', const=True, action='store_const', default=False)
   cert_parser = parser.add_mutually_exclusive_group(required=True)
   cert_parser.add_argument('-C', '--certificate', dest='cert', help="Path to a PEM certificate file")
   cert_parser.add_argument('--no-certificate', dest='cert', const=None, action='store_const')
