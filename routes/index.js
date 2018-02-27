@@ -25,12 +25,12 @@ module.exports = function (passport) {
   }));
 
 
-  router.get('/adminRegister', function (req, res) {
+  router.get('/adminRegister', checkAuth, function (req, res) {
     res.render('adminRegister.njk', { authenticated: true });
   });
 
 
-  router.post('/adminRegister', [
+  router.post('/adminRegister', checkAuth, [
     check('email')
       .exists()
       .isEmail().withMessage('Please enter valid email')
@@ -51,12 +51,27 @@ module.exports = function (passport) {
   }));
 
 
-  router.get('/adminReset', checkAuth, function (req, res) {
+  router.get('/adminReset', function (req, res) {
     res.render('adminReset.njk', { authenticated: true });
   });
 
 
-  router.post('/adminReset', checkAuth, passport.authenticate('reset', {
+  router.post('/adminReset', [
+    check('email')
+      .exists()
+      .isEmail().withMessage('Please enter valid email')
+      .trim()
+      .normalizeEmail(),
+
+    check('password')
+      .exists()
+      .isLength({ min: 8 })
+      .withMessage('Passwords must be at least 8 characters long'),
+
+    check('reenterpassword', 'Re-enter password field must have the same value as the password field')
+      .exists()
+      .custom((value, { req }) => value === req.body.password),
+  ], checkRegistration, passport.authenticate('reset', {
     successRedirect: '/adminLogin',
     failureRedirect: '/adminReset'
   }));
@@ -514,7 +529,7 @@ function checkRegistration(req, res, next) {
     for (let val in mappedErrors) {
       req.flash('error', mappedErrors[val]['msg']);
     }
-    res.redirect('/adminRegister');
+    res.redirect(req.path);
   } else {
     next();
   }

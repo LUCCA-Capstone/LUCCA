@@ -4,13 +4,13 @@
 <form action="/adminReset" method="POST">
   <h2>Reset your admin account password</h2>
     <div class="form-group">
-      <input name="email" type="createusername" class="form-control" placeholder="Enter email" style="width: 200px;">
+      <input name="email" type="email" class="form-control" placeholder="Enter email" style="width: 300px;" required>
     </div>
     <div class="form-group">
-      <input name="password" type="password" class="form-control" id="createpassword" placeholder="Enter current password" style="width: 200px;">
+      <input name="password" type="password" class="form-control" id="createpassword" placeholder="Enter new password" style="width: 300px;" required>
     </div>
     <div class="form-group">
-      <input name="newPassword" type="password" class="form-control" id="reenterpassword" placeholder="Enter new password" style="width: 200px;">
+      <input name="reenterpassword" type="password" class="form-control" id="reenterpassword" placeholder="Re-enter new password" style="width: 300px;" required>
     </div>
   <button class="btn btn-primary" type="submit" role="button">Reset password</button>
 </form>

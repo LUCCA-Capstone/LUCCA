@@ -31,7 +31,7 @@ app.set('view engine', 'nunjucks');
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(cookieParser('my_secret'));
-app.use(session({ secret: 'my_secret_session_key', cookie: { maxAge: 60000 } }));
+app.use(session({ secret: 'my_secret_session_key', cookie: { maxAge: 600000 } }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
