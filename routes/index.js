@@ -5,6 +5,7 @@ var dbAPI = require('../database/controllers/dbm.js');
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
 const { check, validationResult } = require('express-validator/check');
+const { matchedData } = require('express-validator/filter');
 
 module.exports = function (passport) {
 
@@ -97,7 +98,48 @@ module.exports = function (passport) {
   /* POST registration page. Uses form data to create a new user in the database.
    *      temporarily outputs the results of dbAPI method to console until alerts can be added.
    * ********************************************************************************************/
-  router.post('/registration/:badge', jsonParser, function (req, res) {
+  router.post('/registration/:badge', [
+    check('badge')
+      .exists()
+      .custom(value => {
+        return dbAPI.validateUser(value).then(user => {
+          if (user != undefined)
+            throw new Error('The badge you provided is already in use');
+        });
+      }),
+
+    check('first').exists().withMessage('Please enter first name'),
+
+    check('last').exists().withMessage('Please enter last name'),
+
+    check('email')
+      .exists()
+      .isEmail().withMessage('Please enter valid email')
+      .trim()
+      .normalizeEmail()
+      .custom(value => {
+        return dbAPI.validateUser(value).then(user => {
+          if (user != undefined)
+            throw new Error('The email you provided is already in use');
+        });
+      }),
+
+    check('phone')
+      .exists()
+      .isMobilePhone('any').withMessage('Please enter valid phone number'),
+
+    check('signature').exists().withMessage('Please enter signature'),
+
+    check('ecSignature').exists(),
+
+    check('ecName').exists().withMessage('Please enter emergency contact name'),
+
+    check('ecRel').exists().withMessage('Please enter emergency contact relationship'),
+
+    check('ecPhone')
+      .exists()
+      .isMobilePhone('any').withMessage('Please enter valid emergency contact phone number'),
+  ], checkRegistration, jsonParser, function (req, res) {
     if (!req.body) {
       //400 Bad Request
       return res.sendStatus(400);
@@ -112,9 +154,14 @@ module.exports = function (passport) {
     //pass JSON object to createUser database method to add newly registered user
     dbAPI.createUser(req.body).done(function (results) {
       console.log(results);  //output results to console for now for dev purposes only
-      //TODO: I will research reasonable ways to deal with errors and update later
+      if (!results.result) {
+        req.flash('error', results.detail);
+        req.flash('error', 'Email or badge number may already be in use');
+        res.redirect(req.path);
+      } else {
+        res.redirect('/badgein');
+      }
     });
-    res.redirect('/badgein');
   });
 
 
@@ -538,6 +585,16 @@ function checkRegistration(req, res, next) {
     for (let val in mappedErrors) {
       req.flash('error', mappedErrors[val]['msg']);
     }
+
+    const allData = matchedData(req);
+    for (let val in allData) {
+      req.flash(val, allData[val]);
+    }
+
+    if (req.body.mailingList != undefined) {
+      req.flash('mailingList', 'checked');
+    }
+
     res.redirect(req.path);
   } else {
     next();
