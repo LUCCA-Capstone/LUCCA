@@ -19,7 +19,16 @@ module.exports = function (passport) {
   });
 
 
-  router.post('/adminLogin', passport.authenticate('login', {
+  router.post('/adminLogin', [
+    check('email')
+      .exists()
+      .isEmail().withMessage('Please enter valid email')
+      .trim()
+      .normalizeEmail(),
+
+    check('password')
+      .exists(),
+  ], checkRegistration, passport.authenticate('login', {
     successRedirect: '/',
     failureRedirect: '/adminLogin'
   }));
@@ -51,12 +60,12 @@ module.exports = function (passport) {
   }));
 
 
-  router.get('/adminReset', function (req, res) {
+  router.get('/adminReset', checkAuth, function (req, res) {
     res.render('adminReset.njk', { authenticated: true });
   });
 
 
-  router.post('/adminReset', [
+  router.post('/adminReset', checkAuth, [
     check('email')
       .exists()
       .isEmail().withMessage('Please enter valid email')
