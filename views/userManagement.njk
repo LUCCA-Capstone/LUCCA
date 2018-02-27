@@ -15,10 +15,9 @@
     </div>
 </div>
 <br />
-<form id="searchForm" style="display:inline;" method="post">
-    <input id="searchBox" name="userInput" size="40" type="text" placeholder="Search User (by Badge ID or Email) Here"required/>
-    <input id="searchBtn" value="Go" type="submit"/>
-</form> 
+
+    <input id="searchBox" name="userInput" size="40" type="text" onkeyup = "searchFunction()" placeholder="Search User (by Badge ID or Name) Here"required/>
+    
 <br /><br />
 
 <div class="row">
@@ -30,7 +29,7 @@
 </div>
 
 <div class="container mb-5 pb-5">
-    <table class="table">
+    <table class="table" id = "userTable">
         <thead>
             <tr>
                 <th scope="col">Name</th>
@@ -57,6 +56,27 @@
         function fwd(obj) {
             var badge  = obj.getAttribute("data-badge")
             window.location.href = ("/userManagement/" + badge), true
+        }
+        function searchFunction()
+        {
+            var input,filter,table,tr,td, i,td2;
+            input = document.getElementById("searchBox");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("userTable");
+            tr = table.getElementsByTagName("tr");
+             for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                td2 = tr[i].getElementsByTagName("td")[1];
+                 if (td && td2) {
+                   if ((td.innerHTML.toUpperCase().indexOf(filter) > -1) || (td2.innerHTML.toUpperCase().indexOf(filter) > -1)){
+                    tr[i].style.display = "";
+                   } 
+                   else {
+                    tr[i].style.display = "none";
+                       }
+                  }       
+            }
+
         }
 
 </script>
