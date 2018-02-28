@@ -44,7 +44,7 @@ router.post('/user-access', function(req, res, next) {
       return res.sendStatus(403); 
     }
     else if (station.certCN !== cert.subject.CN) {
-      db.logEvent('station management', "Heartbeat for station with ID '" + stationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").then(function(response) {
+      db.logEvent('station management', "Heartbeat for station with ID '" + headerObj['station-id'] + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").then(function(response) {
       });
       return res.sendStatus(403);
     } 
@@ -63,6 +63,7 @@ router.post('/user-access', function(req, res, next) {
           'status': person.dataValues.status,
           'user': person.dataValues.last+','+person.dataValues.first, 
           'badge': person.dataValues.badge,
+          'station': headerObj['station-id'],
           'destination': null, 
           'userInCache': null,
           'access': true
@@ -81,6 +82,7 @@ router.post('/user-access', function(req, res, next) {
           'status': person.dataValues.status,
           'user': person.dataValues.last+','+person.dataValues.first, 
           'badge': person.dataValues.badge,
+          'station': headerObj['station-id'],
           'destination': null, 
           'userInCache': null,
           'access': false
@@ -140,6 +142,7 @@ router.post('/user-access', function(req, res, next) {
           'status': person.dataValues.status,
           'user': person.dataValues.last+','+person.dataValues.first, 
           'badge': person.dataValues.badge,
+          'station': headerObj['station-id'],
           'destination': null,
           'access': false
         };
@@ -190,14 +193,19 @@ router.post('/user-access', function(req, res, next) {
       };
     };
     db.grantPrivileges(res.locals.obj.userInCache['badge'], req.headers['station-id']).then(function(approval) {
-      cache.delete(req.headers['station-id']);
-      stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
-      res.set({
-        'Content-Type': 'text/plain',
-        'station-state': 'enabled',
-        'User-ID-String': res.locals.obj.userInCache['user']
-      })
-      return res.sendStatus(200);
+      let user = res.locals.obj.badge;
+      let userInCache = res.locals.obj.userInCache['badge'];
+      let station = res.locals.obj.station;
+      db.logEvent('Granted permission to log into station',station + ' by ' + user + ' for ' + userInCache).then(function(){
+        cache.delete(req.headers['station-id']);
+        stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
+        res.set({
+          'Content-Type': 'text/plain',
+          'station-state': 'enabled',
+          'User-ID-String': res.locals.obj.userInCache['user']
+        });
+        return res.sendStatus(200);
+      });
     });
   } 
   else if(res.locals.obj.destination === 'cache' && !res.locals.obj.access) {
@@ -231,11 +239,15 @@ router.post('/user-access', function(req, res, next) {
     };
     if(anyOneOnMachine.user === null) {
       stationLog.addUser(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
+      let user = res.locals.obj.badge;
+      let station = res.locals.obj.station;
+      db.logEvent('log on station',station + ' by user ' + user).then(function(){
+      });
       res.set({
         'Content-Type': 'text/plain',
         'station-state': 'enabled',
         'User-ID-String': res.locals.obj.user
-      });
+      })
       return res.sendStatus(200);
     } else {
       return res.sendStatus(403);
@@ -254,6 +266,10 @@ router.post('/user-access', function(req, res, next) {
       res.set({
         'Content-Type': 'text/plain',
         'station-state': 'disabled',
+      });
+      let user = res.locals.obj.badge;
+      let station = res.locals.obj.station;
+      db.logEvent('log off station',station + ' by user ' + user).then(function(){
       });
       return res.sendStatus(200);
     } else {
