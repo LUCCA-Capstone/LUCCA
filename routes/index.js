@@ -94,9 +94,9 @@ module.exports = function (passport) {
     res.render('registration.njk', { authenticated: req.isAuthenticated() });
   });
 
-   /* POST registration page. Uses form data to create a new user in the database.
-   *      temporarily outputs the results of dbAPI method to console until alerts can be added.
-   * ********************************************************************************************/
+  /* POST registration page. Uses form data to create a new user in the database.
+  *      temporarily outputs the results of dbAPI method to console until alerts can be added.
+  * ********************************************************************************************/
   router.post('/registration/:badge', [
     check('badge')
       .exists()
@@ -196,17 +196,37 @@ module.exports = function (passport) {
 
 
   router.get('/userManagement', checkAuth, function (req, res) {
-    dbAPI.getUsers().then(function (ret) {
-      res.render('userManagement.njk', { obj: ret, authenticated: true });
-    });
-  });
 
+    Promise.all([
+      dbAPI.getUsers(undefined),
+      dbAPI.getStations()
+
+    ])
+      .then(
+        ([allUsers, allStations]) => {
+          var data = {
+            users: allUsers,
+            stations: allStations,
+            authenticated: true
+          }
+
+          res.render('userManagement.njk', data);
+        }
+      )
+      .catch(
+        err => {
+          console.warn("something went wrong:", err);
+          res.status(500).send(err);
+        }
+      );
+  });
 
   router.post('/userManagement', checkAuth, function (req, res) {
     dbAPI.validateUser(req.body.userInput).then(function (ret) {
       res.render('userManagement.njk', { obj: [ret.dataValues], authenticated: true });
     });
   });
+
 
 
   router.get('/stationManagement/:filter', checkAuth, jsonParser, getStnMngmnt);
@@ -243,7 +263,7 @@ module.exports = function (passport) {
         console.log("confirmation changed successfully");
       }
     });
-    res.redirect('/userManagement');
+    res.redirect('/userManagement/' + BagdeID);
   });
 
 
@@ -256,7 +276,7 @@ module.exports = function (passport) {
     dbAPI.removePrivileges(BagdeID, StationID).then(function (result) {
       console.log(result);
     });
-    res.redirect('/userManagement');
+    res.redirect('/userManagement/' + BagdeID);
   });
 
 
@@ -269,7 +289,7 @@ module.exports = function (passport) {
     dbAPI.grantPrivileges(BagdeID, StationID).then(function (result) {
       console.log(result);
     });
-    res.redirect('/userManagement');
+    res.redirect('/userManagement/' + BagdeID);
 
   });
 
@@ -294,7 +314,7 @@ module.exports = function (passport) {
           }
         });
       }
-      res.redirect('/userManagement');
+      res.redirect('/userManagement/' + BagdeID);
 
     });
 
@@ -321,16 +341,37 @@ module.exports = function (passport) {
           }
         });
       }
-      res.redirect('/userManagement');
+      res.redirect('/userManagement/' + BagdeID);
 
     });
 
   });
 
-  router.post('/userManagement/getPrivilegedStationUsers/:sid', checkAuth, function (req, res) {
-    dbAPI.getPrivilegedStationUsers(req.params.sid).then((users) => {
-      res.send(users);
-    });
+  router.get('/userManagement/getPrivilegedStationUsers/:sid', checkAuth, function (req, res) {
+
+    Promise.all([
+      dbAPI.getPrivilegedStationUsers(req.params.sid),
+      dbAPI.getStations()
+
+    ])
+      .then(
+        ([allUsers, allStations]) => {
+          var data = {
+            users: allUsers,
+            stations: allStations,
+            authenticated: true
+          }
+
+          res.render('userManagement.njk', data);
+        }
+      )
+      .catch(
+        err => {
+          console.warn("something went wrong:", err);
+          res.status(500).send(err);
+        }
+      );
+
   });
 
   router.get('/userManagement/:badge', checkAuth, function (req, res) {

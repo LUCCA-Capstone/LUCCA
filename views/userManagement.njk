@@ -16,8 +16,28 @@
 </div>
 <br />
 
-    <input id="searchBox" name="userInput" size="40" type="text" onkeyup = "searchFunction()" placeholder="Search User (by Badge ID or Name) Here"required/>
-    
+  <div class ="container">
+  <div class="form row" >
+    <div class="col-10">
+         <input id="searchBox" name="userInput" size="40" type="text" onkeyup = "searchFunction()" placeholder="Search User (by Badge ID or Name) Here"required/>
+    </div>
+    <div class="col-2 align-self-end">
+      <!-- dropdown menu to filter stations displayed based on registered status -->
+      <div class="btn-group dropright">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropRightMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Filter Users By Stations
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropRightMenu">
+           {% for item in stations %}
+
+             <a class="dropdown-item" href = "/userManagement/getPrivilegedStationUsers/{{item.sId}}">{{item.name}}</a>
+            
+           {% endfor %}
+          </div>
+      </div>
+    </div>
+  </div>
+</div>  
 <br /><br />
 
 <div class="row">
@@ -39,7 +59,7 @@
                 </tr>
         </thead>
 
-        {% for item in obj %}
+        {% for item in users %}
             <tr>
                 <td>{{item.first}} {{item.last}}</td>
                 <td><name="badgeNumber">{{item.badge}}</td>
