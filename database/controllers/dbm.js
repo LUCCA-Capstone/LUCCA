@@ -60,33 +60,32 @@ module.exports = {
   // the given start date to the given end date.  If start date
   // is undefined then all users will be returned.
   getUsers(from, to) {
-    if (from === undefined && to === undefined) {
-      //Return all results
-      return user.findAll({
-        raw: true
-      }).then(users => {
-        return users;
-      }).catch(err => {
-        return false;
-      });
-    } else {
-      var start = '\'' + from + '%\'';  //Date format should be year-month-day (ex. 2000-01-01)
-      var stop = '\'' + to + '%\'';     //Date format should be year-month-day (ex. 2000-01-01)
-
-      //Return only results between start date and stop date.
-      return db.sequelize.query("SELECT * FROM \"public\".\"users\"" +
-        " where \"public\".\"users\".\"createdAt\" between " +
-        start + " AND " + stop, { raw: true }
-      ).then(results => {
-        //Strips out all unneeded information that is returned
-        //from the query above and only keeps the user data
-        var resultsJson = results[0];
-        return resultsJson;
-
-      }).catch(err => {
-        return false;
-      });
+    var queryParameters = {};
+    var returnStatus = {result: true, detail: 'Success'};
+    if (from !== undefined && to !== undefined) {
+      queryParameters["createdAt"] = {
+        [Op.gte] : from,
+        [Op.lte] : to
+      }
+    } else if (from !== undefined) {
+      queryParameters["createdAt"] = {
+        [Op.gte] : from
+      }
+    } else if (to !== undefined) {
+      queryParameters["createdAt"] = {
+        [Op.lte] : to
+      }
     }
+
+    //Return all results
+    return user.findAll({
+      where: queryParameters,
+      raw: true
+    }).then(users => {
+      return users;
+    }).catch(err => {
+      return false;
+    });
   },
 
   //Usage: Add a new User to the DB
