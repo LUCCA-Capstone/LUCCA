@@ -50,7 +50,7 @@ module.exports = {
         type: Sequelize.STRING
         },
       confirmation: {
-        defualtValue: false,
+        defaultValue: false,
         type: Sequelize.BOOLEAN
       },
       password: {
@@ -60,6 +60,10 @@ module.exports = {
       mailingList: {
        defaultValue: false,
        type: Sequelize.BOOLEAN
+      },
+      loggedIn: {
+        defaultValue: false,
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
