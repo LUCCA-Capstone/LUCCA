@@ -516,9 +516,9 @@ describe('DB TEST', function () {
   });
 
   describe('getUser + one undefined date', function () {
-    it('Should return false', function (done) {
+    it('Should return subset of users from a start date', function (done) {
       controllers.getUsers(startDate, endDate).done(function (results) {
-        expect(results).to.equal(false);
+        expect(results).to.have.length.above(1);
         done();
         endDate = '2000-01-02'
       });
