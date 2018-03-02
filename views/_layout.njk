@@ -33,11 +33,6 @@
           <!-- Each navbar button is its own block so child-pages can denote which is "active" -->
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
-              {% block Home %}
-              <li class="nav-item">
-                <a class="nav-link" href="/">Home</a>
-              </li>
-              {% endblock %}
 
               {% block Badgein %}
               <li class="nav-item">
@@ -57,16 +52,11 @@
               {% if authenticated %}
                 {% block adminManagement %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Management</a>
+                    <a class="nav-link dropdown-toggle" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin management</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown10">
-                      <a class="dropdown-item" href="/userManagement">User</a>
-                      <a class="dropdown-item" href="/stationManagement/all">Station</a>
+                      <a class="dropdown-item" href="/userManagement">Users</a>
+                      <a class="dropdown-item" href="/stationManagement/all">Stations</a>
                       <a class="dropdown-item" href="/eventsLog/all">Events</a>
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="dropdown11" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-                    <div class="dropdown-menu" aria-labelledby="dropdown11">
                       <a class="dropdown-item" href="/adminRegister">Register new admin</a>
                       <a class="dropdown-item" href="/adminReset">Reset an admin password</a>
                     </div>
@@ -86,24 +76,14 @@
     <!-- container for displaying alert messages to the user -->
     <div class="container">
       {% block alerts %}      
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-6 mx-auto">
-              <div id="alertError" class="alert alert-danger collapse">
-                <a href="#" id="closeError" class="close">&times;</a>
-                <strong>Error:</strong> {{message}}
-              </div>
-            </div>
+        {% if messages.success %} 
+          {% for msg in messages.success%}
+          <div class="alert alert-success alert-dismissible">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            {{msg}}
           </div>
-          <div class="row">
-            <div class="col-lg-6 mx-auto">
-              <div id="alertSuccess" class="alert alert-success collapse">
-                <a href="#" id="closeSuccess" class="close">&times;</a>
-                <strong>Success:</strong> {{message}}
-              </div>
-            </div>
-          </div>
-        </div> <!-- /alerts container -->
+          {% endfor %}
+        {% endif %}
         {% if messages.error %} 
           {% for msg in messages.error%}
           <div class="alert alert-danger alert-dismissible">
@@ -113,6 +93,7 @@
           {% endfor %}
         {% endif %}
       {% endblock %}
+    </div>
 
     <div class="container">
       <!-- Add body from child in this "content" block -->
@@ -133,32 +114,6 @@
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/js/bootstrap.min.js" integrity="sha384-a5N7Y/aK3qNeh15eJKGWxsqtnX/wWdSZSKp+81YjTmS15nvnvxKHuzaWwXHDli+4" crossorigin="anonymous"></script>
-    {% endblock %}
-    
-    {% block alertScripts %}
-      <script>
-        //messagePassing function shows alert message that is passed into DOM from router.
-        //  User can manually dismiss or will auto close after 3 seconds.
-        //parameters: elementId - id of the html page element to be shown/hidden.
-        //            closeId   - id of the button element exposed to user to manually dismiss message.
-        function messagePassing (elementId, closeId) {
-          $(elementId).fadeIn("slow");
-
-          setTimeout(function () {
-            $(elementId).fadeOut("slow");
-          }, 3000);
-
-          $(clodeId).click(function () {
-            $(elementId).fadeOut("slow");
-          });
-        }
-      </script>
-
-      {% if messageType === "error" %}
-        <script>messagePassing('#alertError', '#closeError');</script>
-      {% elseif messageType === "success" %}
-        <script>messagePassing('#alertSuccess', '#closeSuccess');</script>
-      {% endif %}
     {% endblock %}
 
   </body>

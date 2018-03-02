@@ -11,7 +11,7 @@ module.exports = function (passport) {
 
   /* GET home page. */
   router.get('/', function (req, res) {
-    res.render('HomePage.njk', { authenticated: req.isAuthenticated() });
+    res.redirect('/badgein');
   });
 
 
@@ -94,8 +94,7 @@ module.exports = function (passport) {
     res.render('registration.njk', { authenticated: req.isAuthenticated() });
   });
 
-
-  /* POST registration page. Uses form data to create a new user in the database.
+   /* POST registration page. Uses form data to create a new user in the database.
    *      temporarily outputs the results of dbAPI method to console until alerts can be added.
    * ********************************************************************************************/
   router.post('/registration/:badge', [
@@ -159,6 +158,7 @@ module.exports = function (passport) {
         req.flash('error', 'Email or badge number may already be in use');
         res.redirect(req.path);
       } else {
+        req.flash('success', "Thank you, " + req.body.first + ", you have registered. Please badge in to use the lab.");
         res.redirect('/badgein');
       }
     });
@@ -212,9 +212,6 @@ module.exports = function (passport) {
 
 
   router.get('/eventsLog/:class', checkAuth, jsonParser, getEvents);
-
-
-  router.post('/eventsLog/:class', checkAuth, jsonParser, postEvents, getEvents);
 
 
   router.post('/userManagement/deleteUser/:badge', checkAuth, function (req, res) {
@@ -383,18 +380,13 @@ var checkAuth = function (req, res, next) {
   *    If filter == "registered", only registered stations will be displayed (i.e. registered = true)
   *    If filter == "unregistered", only unregistered stations will be displayed (i.e. registered = false)
   *    Otherwise, all stations will be displayed sorted with unregistered stations first.
-  *    If "messageType" and "message" are defined in req, it will trigger alert message passing in DOM.
   *********************************************************************************************************/
 function getStnMngmnt(req, res) {
   //set filter based on query parameter passed in
+  var data = { authenticated: true }
   var filter = req.params.filter;
-  filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
 
-  var data = {
-    messageType: req.messageType,
-    message: req.message,
-    authenticated: true
-  }
+  filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
 
   //get results from database that match filter
   dbAPI.getStations(filter).then(function (ret) {
@@ -405,11 +397,9 @@ function getStnMngmnt(req, res) {
       //display sorted array of stations, unregistered stations first
       data.obj = ret;
     } else {
-      //display error to user if no database using alert message on page
+      //display error to user if no database
       data.obj = ret;
-      data.messageType = 'error';
-      data.message = "There was a problem communicating with the database.\
-                      Please contact the DB administrator."
+      req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
     }
     res.render('stationManagement.njk', data);
   });
@@ -419,7 +409,6 @@ function getStnMngmnt(req, res) {
 /*postStnMngr serves two purposes: if req.body JSON contains a "delete" element, then the
  *     user pushed a "delete" button and the station referenced by "sId" element is deleted from tables.
  *     Otherwise, the station identified by "sId" is updated to values in JSON body and registered = true.
- *     Implements message passing: signals success or failure to "next" in "req.messageType" and "req.message"
  ***************************************************************************************************************/
 function postStnMngr(req, res, next) {
   if (!req.body) {
@@ -427,32 +416,27 @@ function postStnMngr(req, res, next) {
     return res.sendStatus(400);
   }
 
-  req.messageType = "success"; //temporarily assume success!
-
   if (req.body.delete === "true") {
     //delete station referenced by sId in body
     dbAPI.deleteStation(req.body.sId).then(function (ret) {
       if (ret.result === true) {
-        req.message = req.body.name + " has been successfully deleted.";
+        req.flash('sucess', req.body.name + " has been successfully deleted.");
       } else {
-        req.messageType = "error";
-        req.message = "Internal problem - unable to delete " + req.body.name + ".";
+        req.flash('error', "Internal problem - unable to delete " + req.body.name + ".");
       }
       next();
     });
   } else {
     //convert registered string to a boolean & give new update date
     req.body.registered = (req.body.registered === "true") ? true : false;
-    req.body.updatedAt = new Date();
 
     //update station referenced by sId in body
     dbAPI.modifyStation(req.body.sId, req.body).then(function (ret) {
       //prepare to pass success message to next()
       if (ret.result === true) {
-        req.message = req.body.name + " has been succesfully updated.";
+        req.flash('success', req.body.name + " has been succesfully updated.");
       } else {
-        req.messageType = "error";
-        req.message = "Internal problem - unable to update " + req.body.name + ".";
+        req.flash('error', "Internal problem - unable to update " + req.body.name + ".");
       }
       next();
     });
@@ -461,13 +445,7 @@ function postStnMngr(req, res, next) {
 
 
 function getBadgeIn(req, res) {
-  var data = {
-    messageType: req.messageType,
-    message: req.message,
-    authenticated: req.isAuthenticated()
-  }
-
-  res.render('badgein.njk', data);
+  res.render('badgein.njk', { authenticated: req.isAuthenticated() });
 }
 
 
@@ -490,8 +468,7 @@ function postBadgeIn(req, res, next) {
     }
 
     else {
-      req.messageType = "success";
-      req.message = "You successfully Badge In";
+      req.flash('success', "You successfully badged in to the lab.");
       dbAPI.logEvent("EPL Badge IN", BadgeNumber);
       next();
     }
@@ -503,15 +480,10 @@ function postBadgeIn(req, res, next) {
 /*getEvents will render a table of all events that match the query parameter passed on this GET request.
   *    If req.params.class parameter matches an event class, on that those types of events will be displayed.
   *    Otherwise, all events will be displayed sorted with the most recent events first.
-  *    If "messageType" and "message" are defined in req, it will trigger alert message passing in DOM.
   *********************************************************************************************************/
 function getEvents(req, res) {
   var filterClass = getFilterClass(req.params.class);
-  var data = {
-    messageType: req.messageType,
-    message: req.message,
-    authenticated: true
-  }
+  var data = { authenticated: true }
 
   dbAPI.getEvents(filterClass).then(function (ret) {
     //if array of results returned from database, sort with most recent date at top
@@ -520,47 +492,14 @@ function getEvents(req, res) {
         return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
       });
     }
-
-    //display error to user if no database using alert message on page
     data.obj = ret;
     res.render('eventsLog.njk', data);
   }).
     catch(err => {
-      data.messageType = "error";
-      data.message = "Internal connection problem. Please contact the DB administrator.";
+      req.flash('error', "Internal connection problem. Please contact the DB administrator.");
       res.render('eventsLog.njk', data);
     });
 };
-
-
-/*postEvents will delete the event that corresponds to req.body.id in this POST, if it exists.
- *     Upon completion, will call "next" function to GET and display revised list of log entries.
- *     Implements message passing: signals success or failure to "next" in "req.messageType" and "req.message"
- ***************************************************************************************************************/
-function postEvents(req, res, next) {
-  if (!req.body) {
-    //400 Bad Request
-    return res.sendStatus(400);
-  }
-
-  req.messageType = "success"; //temporarily assume success!
-
-  //delete station referenced by sId in body
-  dbAPI.deleteEvent(req.body.id).then(function (ret) {
-    if (ret.result === true) {
-      req.message = "Log entry " + req.body.id + " has been deleted.";
-    } else {
-      req.messageType = "error";
-      req.message = "Unable to delete " + req.body.id + ". \n" + ret.detail;
-    }
-    next();
-  }).
-    catch(err => {
-      data.messageType = "error";
-      data.message = "Internal connection problem. Please contact the DB administrator.";
-      next();
-    });
-}
 
 
 //Simple helper function returns event class type that corresponds to filter
