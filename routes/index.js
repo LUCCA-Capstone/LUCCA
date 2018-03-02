@@ -168,7 +168,12 @@ module.exports = function (passport) {
   router.get('/badgein', getBadgeIn);
 
 
-  router.post('/badgein', jsonParser, postBadgeIn, getBadgeIn);
+  router.post('/badgein', [
+    check('badgeNumber')
+      .exists()
+      .isNumeric().withMessage('Only numeric badge numbers allowed')
+      .trim()
+  ], checkRegistration, jsonParser, postBadgeIn);
 
 
   router.get('/badgeinSuccess', function (req, res) {
@@ -199,7 +204,6 @@ module.exports = function (passport) {
 
   router.post('/userManagement', checkAuth, function (req, res) {
     dbAPI.validateUser(req.body.userInput).then(function (ret) {
-      console.log(ret.dataValues);
       res.render('userManagement.njk', { obj: [ret.dataValues], authenticated: true });
     });
   });
@@ -220,7 +224,6 @@ module.exports = function (passport) {
     }
     var DeletedBadge = req.params.badge;
     dbAPI.deleteUser(DeletedBadge).then(function (result) {
-      console.log(result);
       console.log("user is deleted successfully");
     });
     res.redirect('/userManagement');
@@ -332,7 +335,6 @@ module.exports = function (passport) {
 
   router.get('/userManagement/:badge', checkAuth, function (req, res) {
     var BadgeNumber = req.params.badge;
-    //dbAPI.grantPrivileges(BadgeNumber, '1');
     Promise.all([
       dbAPI.getStations(undefined),
       dbAPI.getPrivileges(BadgeNumber),
@@ -353,7 +355,6 @@ module.exports = function (passport) {
             }
             flag = false;
           }
-          console.log(allStations);
           res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations });
         }
       )
@@ -448,31 +449,24 @@ function getBadgeIn(req, res) {
   res.render('badgein.njk', { authenticated: req.isAuthenticated() });
 }
 
-
 function postBadgeIn(req, res, next) {
   if (!req.body) {
     return res.sendStatus(400);
   }
 
-  var BadgeNumber = req.body.badgeNumber;
+  var badgeNumber = req.body.badgeNumber;
 
-  dbAPI.validateUser(BadgeNumber).then(function (result) {
-    console.log('BN = ' + BadgeNumber);
-
+  dbAPI.validateUser(badgeNumber).then(function (result) {
     // this checks if the badge number is not in the database
     if (result == undefined) {
-
       // go to the registration page
-      res.redirect('/registration/' + BadgeNumber);
-
+      res.redirect('/registration/' + badgeNumber);
+    } else {
+      req.flash('success', 'You successfully badged into the lab!');
+      req.flash('fade_out', '3000');
+      dbAPI.logEvent("EPL Badge IN", badgeNumber);
+      res.redirect('/badgein');
     }
-
-    else {
-      req.flash('success', "You successfully badged in to the lab.");
-      dbAPI.logEvent("EPL Badge IN", BadgeNumber);
-      next();
-    }
-
   });
 }
 
