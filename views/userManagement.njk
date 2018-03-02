@@ -35,7 +35,7 @@
                 <th scope="col">Name</th>
                 <th scope="col">Badge Number</th>
                 <th scope="col">Validated</th>
-                <th scope="col">Edit</th>
+                <th scope="col">Modify values</th>
                 </tr>
         </thead>
 
@@ -44,7 +44,7 @@
                 <td>{{item.first}} {{item.last}}</td>
                 <td><name="badgeNumber">{{item.badge}}</td>
                 <td>{{item.confirmation}}</td>
-                <td><button class="btn btn-primary" onclick="fwd(this)" data-badge={{item.badge}} >User-Station</button></td>
+                <td><button class="btn btn-primary" onclick="fwd(this)" data-badge={{item.badge}}>Edit details</button></td>
                 {# <td action="/userManagement/badge" method="post"><button class="btn btn-primary" type="Submit">User-Station</button><td> #}
             </tr>
         {% endfor %}   
