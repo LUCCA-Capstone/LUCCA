@@ -238,10 +238,10 @@ module.exports = {
       sId: sId,
       createdAt: new Date(),
       updatedAt: new Date()
-      }).then(() => {
-        return returnStatus;
-      }).catch(err => {
-        return module.exports.errorHandling(err, returnStatus);
+    }).then(() => {
+      return returnStatus;
+    }).catch(err => {
+      return module.exports.errorHandling(err, returnStatus);
     });
   },
 
@@ -257,12 +257,12 @@ module.exports = {
     var returnStatus = { result: true, detail: 'Success' };
     return privileges.destroy({
       where: {
-        [Op.and]: [{badge: bId},{sId: sId}]
+        [Op.and]: [{ badge: bId }, { sId: sId }]
       }
     }).then(results => {
-      if(results === 0){
-      returnStatus.result = false;
-      returnStatus.detail = 'No matching rows';
+      if (results === 0) {
+        returnStatus.result = false;
+        returnStatus.detail = 'No matching rows';
       }
       return returnStatus;
     }).catch(err => {
@@ -311,6 +311,17 @@ module.exports = {
     }
   },
 
+  // Given a station ID it will return all users who are privileged to use that station
+  getPrivilegedStationUsers(sId) {
+    return user.findAll({
+      include: [{
+        model: privileges,
+        where: { sId: sId }
+      }]
+    }).catch(err => {
+      return err;
+    });
+  },
 
   getStation(sId) {
     return machine.findAll({
@@ -409,8 +420,8 @@ module.exports = {
   // ValidationError, Other
   //Description:  This function will record all interactivity between
   // the users and the database.  As well as all errors that occurred.
-  logEvent(eventClass, eventText, eventDate=undefined){
-    var returnStatus = {result: true, detail: 'Success'};
+  logEvent(eventClass, eventText, eventDate = undefined) {
+    var returnStatus = { result: true, detail: 'Success' };
     let logData = {
       eventClass: eventClass, // A string representing the sort of event (e.g. access, error, management, start-stop)
       event: eventText, // The explanatory string describing the event (i.e. the text of the log entry)
@@ -420,10 +431,10 @@ module.exports = {
     }
 
     //Adds a new row to the event table
-    return log.create(logData).then(function (result){
+    return log.create(logData).then(function (result) {
       //Transaction completed
       return returnStatus;
-    }).catch(err =>{
+    }).catch(err => {
       //Transaction incomplete -
       //Error occurred when adding data to the
       //Event table.
@@ -443,31 +454,31 @@ module.exports = {
   // Additionally, this function will allow for requesting events
   // during a specific date range.  If both from and to are left undefined then all
   // results are returned.
-  getEvents(eventClass=undefined, from=undefined, to=undefined){
+  getEvents(eventClass = undefined, from = undefined, to = undefined) {
     var queryParameters = {};
-    var returnStatus = {result: true, detail: 'Success'};
-    if (typeof(eventClass) != 'undefined') {
+    var returnStatus = { result: true, detail: 'Success' };
+    if (typeof (eventClass) != 'undefined') {
       queryParameters["eventClass"] = eventClass;
     }
-    if (typeof(from) != 'undefined' && typeof(to) != 'undefined') {
+    if (typeof (from) != 'undefined' && typeof (to) != 'undefined') {
       queryParameters["eventDate"] = {
-        [Op.gte] : from,
-        [Op.lte] : to
+        [Op.gte]: from,
+        [Op.lte]: to
       }
-    } else if (typeof(from) != 'undefined') {
+    } else if (typeof (from) != 'undefined') {
       queryParameters["eventDate"] = {
-        [Op.gte] : from
+        [Op.gte]: from
       }
-    } else if (typeof(to) != 'undefined') {
+    } else if (typeof (to) != 'undefined') {
       queryParameters["eventDate"] = {
-        [Op.lte] : to
+        [Op.lte]: to
       }
     }
     return log.findAll({
       where: queryParameters
-    }).then(function(data){
+    }).then(function (data) {
       return data;
-    }).catch(err =>{
+    }).catch(err => {
       console.log(JSON.stringify(err, null, 2));
       return [];
     });
@@ -480,16 +491,16 @@ module.exports = {
   // ValidationError, Other
   //Description:  This function will delete an event with the specified
   // ID, if it exists. It returns a status object.
-  deleteEvent(eventId){
+  deleteEvent(eventId) {
     console
     return log.destroy({
       where: {
         id: eventId
       }
-    }).then(function(){
-      return {result: true, detail: 'Success'};
-    }).catch(err =>{
-      return {result: false, detail: err};
+    }).then(function () {
+      return { result: true, detail: 'Success' };
+    }).catch(err => {
+      return { result: false, detail: err };
     });
   }
 }

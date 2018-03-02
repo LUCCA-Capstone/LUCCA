@@ -327,6 +327,11 @@ module.exports = function (passport) {
 
   });
 
+  router.post('/userManagement/getPrivilegedStationUsers/:sid', checkAuth, function (req, res) {
+    dbAPI.getPrivilegedStationUsers(req.params.sid).then((users) => {
+      res.send(users);
+    });
+  });
 
   router.get('/userManagement/:badge', checkAuth, function (req, res) {
     var BadgeNumber = req.params.badge;
