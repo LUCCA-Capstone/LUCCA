@@ -708,4 +708,42 @@ describe('DB TEST', function () {
       });
     });
   });
+
+  describe('getLoggedIn tests', function(){
+    it('User 1234567 should be logged in', function(done){
+      controllers.modifyUser('1234567', {'loggedIn': true}).then(t => {
+        controllers.getLoggedIn('1234567').then(results => {
+          expect(results.loggedIn).to.equal(true);
+          done();
+        });
+      });
+    });
+
+    it('User 1234567 should be logged out', function(done){
+      controllers.modifyUser('1234567', {'loggedIn': false}).then(t => {
+        controllers.getLoggedIn('1234567').then(results => {
+          expect(results).to.equal(false);
+          done();
+        });
+      });
+    });
+
+    it('User abc@123.com should be logged in', function(done){
+      controllers.modifyUser('1234567', {'loggedIn': true}).then(t => {
+        controllers.getLoggedIn('abc@123.com').then(results => {
+          expect(results.loggedIn).to.equal(true);
+          done();
+        });
+      });
+    });
+
+    it('User abc@123.com should be logged out', function(done){
+      controllers.modifyUser('1234567', {'loggedIn': false}).then(t => {
+        controllers.getLoggedIn('abc@123.com').then(results => {
+          expect(results).to.equal(false);
+          done();
+        });
+      });
+    });
+  });
 });

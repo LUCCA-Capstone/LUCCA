@@ -177,6 +177,22 @@ module.exports = {
     });;
   },
 
+  getLoggedIn(uId){
+    return user.findAll({
+      where: {
+        [Op.and]: [{loggedIn: true}, {[Op.or]: [{email: uId}, {badge: uId}]}]
+      },
+      raw: true
+    }).then(results => {
+      if(results.length > 0)
+        return results[0];
+      else
+        return false;
+    }).catch(err => {
+      return false;
+    });
+  },
+
   //Usage: Remove a user from the DB
   //Arguments:
   //         bId - User's badge id.
