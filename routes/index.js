@@ -410,11 +410,14 @@ module.exports = function (passport) {
     ])
       .then(
         ([allStations, trainedStation, userInfo]) => {
+          // console.log(allStations);
+          console.log(trainedStation);
           var flag = new Boolean(false);
           for (var i = 0; i < allStations.length; ++i) {
             for (var j = 0; j < trainedStation.length; ++j) {
               if (allStations[i].sId === trainedStation[j].sId) {
                 allStations[i].trained = true;
+                allStations[i].trainedDate = trainedStation[j].updatedAt;
                 flag = true;
               }
             }
