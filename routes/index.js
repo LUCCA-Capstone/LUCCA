@@ -347,6 +347,33 @@ module.exports = function (passport) {
 
   });
 
+  router.post('/userManagement/badgeOutUser/:badge', checkAuth, function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    var BagdeID = req.params.badge;
+
+    dbAPI.validateUser(BagdeID).then(function (ret) {
+
+      if (ret.loggedIn === true) {
+        dbAPI.modifyUser(BagdeID, { loggedIn: false }).then(function (result) {
+          if (result == undefined) {
+            console.log("Error");
+          }
+          else {
+            console.log("user Badged out successfully");
+            
+          }
+        });
+      }
+      req.flash('success', 'This user badged out the lab successfully');
+      req.flash('fade_out', '3000');
+      res.redirect('/userManagement/' + BagdeID);
+
+    });
+
+  });
+
   router.get('/userManagement/getPrivilegedStationUsers/:sid', checkAuth, function (req, res) {
 
     Promise.all([
@@ -503,10 +530,21 @@ function postBadgeIn(req, res, next) {
       // go to the registration page
       res.redirect('/registration/' + badgeNumber);
     } else {
-      req.flash('success', 'You successfully badged into the lab!');
-      req.flash('fade_out', '3000');
-      dbAPI.logEvent("EPL Badge IN", badgeNumber);
-      res.redirect('/badgein');
+      var BadgeInFlag = result.loggedIn;
+      if (BadgeInFlag === false) {
+        req.flash('success', 'You successfully badged into the lab!');
+        req.flash('fade_out', '3000');
+        dbAPI.logEvent("EPL Badge IN", badgeNumber);
+        dbAPI.modifyUser(badgeNumber, { loggedIn: true });
+        res.redirect('/badgein');
+      }
+      else if (BadgeInFlag === true) {
+        req.flash('success', 'You successfully badged out the lab!');
+        req.flash('fade_out', '3000');
+        dbAPI.logEvent("EPL Badge OUT", badgeNumber);
+        dbAPI.modifyUser(badgeNumber, { loggedIn: false });
+        res.redirect('/badgein');
+      }
     }
   });
 }
