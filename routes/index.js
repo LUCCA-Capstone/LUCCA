@@ -183,35 +183,140 @@ module.exports = function (passport) {
 
 
   router.get('/userManagement', checkAuth, function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+
+      Promise.all([
+        dbAPI.getUsers(undefined),
+        dbAPI.getStations()
+
+      ])
+        .then(
+          ([allUsers, allStations]) => {
+            var data = {
+              users: allUsers,
+              stations: allStations,
+              authenticated: true
+            }
+
+            res.render('userManagement.njk', data);
+          }
+        )
+        .catch(
+          err => {
+            console.warn("something went wrong:", err);
+            res.status(500).send(err);
+          }
+        );
+  });
+
+  router.post('/userManagement', checkAuth, [
+    check('nameInput').exists(),
+
+    check('badgeInput').exists(),
+
+    check('stationSelector').exists(),
+
+    check('statusSelector').exists(),
+
+    check('dateFilter').exists(),
+  ], saveCheckedValues, jsonParser, function (req, res) {
+    //Parse valid date objects for accurage searching in database
+    const numMillisecondsInDay = 1000 * 60 * 60 * 24;
+    var dateRangeArray = req.body.dateFilter ? req.body.dateFilter.split(" - ") : undefined;
+    var startRange = (dateRangeArray && dateRangeArray[0]) ? Date.parse(dateRangeArray[0]) : undefined;
+    var endRange = (dateRangeArray && dateRangeArray[1]) ? Date.parse(dateRangeArray[1]) : undefined;
+    var startDate = startRange ? new Date(startRange) : undefined;
+    var endDate = undefined;
+
+    /*Date.parse returns an exact count of MILLISECONDS since epoch; here we're only
+     *concerned about accuracy to the DAY. If startRange == endRange and we set stateDate
+     *and endDate w/them directly, no results would be between that exact count of milliseconds*/
+    if (endRange && (endRange == startRange)) {
+      endDate = new Date(endRange + numMillisecondsInDay);
+    } else if (endRange) {
+      endDate = new Date(endRange);
+    }
 
     Promise.all([
-      dbAPI.getUsers(undefined),
+      dbAPI.getUsers(startDate, endDate),
+      dbAPI.getPrivilegedStationUsers(req.body.stationSelector),
       dbAPI.getStations()
-
     ])
+
       .then(
-        ([allUsers, allStations]) => {
-          var data = {
-            users: allUsers,
-            stations: allStations,
-            authenticated: true
+        ([usersByDate, privUsers, allStations]) => {
+          if (!usersByDate) {
+            const err = "Interal error: Unable to get users."
+            req.flash('error', err);
+            res.redirect('/userManagement');
+            res.status(500).send(err + "via the /userManagement (post) route.");
           }
 
+          /*Filter by most specific items first to limit number of comparisons.
+          *Also, if user didn't provide a particular input, no comparisons happen at that step.
+          *Must check all provided input, however; cannot return match prematurely as later filter
+          *may weed it out.*/
+          var stationMatchesArray = new Array();
+          var badgeFilter = req.body.badgeInput
+                              ? usersByDate.filter( x => 
+                                  x.badge.indexOf(req.body.badgeInput) > -1)
+                              : usersByDate;
+          var nameFilter = req.body.nameInput
+                              ? badgeFilter.filter( x => 
+                                  (x.first + " " + x.last)
+                                    .toUpperCase()
+                                    .indexOf(req.body.nameInput.toUpperCase()) > -1)
+                              : badgeFilter;
+          var statusFilter = undefined; //specified below; too complex for ternery operator
+          
+          var data = {
+            stations: allStations,
+            authenticated: true
+            //users get added below
+          }
+
+          if ( //User did not specify search by status or explicity chose "All" statuses
+            (req.body.statusSelector && req.body.statusSelector === "All")
+            || (req.body.statusSelector === undefined)
+          ) {
+            statusFilter = nameFilter;
+          } else {
+            //User specified a particular status by which we should search
+            statusFilter = nameFilter.filter( x => x.status === req.body.statusSelector);
+          }
+
+
+          if ( //User did not specify search by station, or explicitly chose "All" stations
+            (req.body.stationSelector && req.body.stationSelector === "All")
+            || (req.body.stationSelector === undefined) 
+          ) {
+            data.users = statusFilter;
+          } else {
+            //If user specified a particular station, iterate over getPrivilegedStationUsers results
+            privUsers.forEach( function (privElement) {
+              statusFilter.forEach( function (statusElement) {
+                if (privElement.badge == statusElement.badge) {
+                  stationMatchesArray.push(privElement);
+                }
+              });
+            });
+
+            data.users = stationMatchesArray;
+          }
+          
           res.render('userManagement.njk', data);
         }
       )
+      
       .catch(
         err => {
-          console.warn("something went wrong:", err);
+          req.flash('error', err.details);
+          res.redirect('/userManagement');
           res.status(500).send(err);
         }
-      );
-  });
-
-  router.post('/userManagement', checkAuth, function (req, res) {
-    dbAPI.validateUser(req.body.userInput).then(function (ret) {
-      res.render('userManagement.njk', { obj: [ret.dataValues], authenticated: true });
-    });
+      )
   });
 
 
@@ -296,25 +401,22 @@ module.exports = function (passport) {
     var badgeID = req.params.badge;
 
     dbAPI.validateUser(badgeID).then(function (ret) {
-      console.log(ret.dataValues);
-      console.log("USER STATUS " + ret.status);
-
       if (ret.status == "User" && ret.status != "Admin") {
         dbAPI.modifyUser(badgeID, { status: "Manager" }).then(function (result) {
           if (result == undefined) {
-            console.log("Error");
+            req.flash("error", "Internal error: unable to promote " + badgeID);
           }
           else {
-            console.log("promotion changed successfully");
+            req.flash("success", "Successfully promoted user associated with Badge number " + badgeID);
           }
-        });
+          res.redirect('/userManagement/' + badgeID);
+        }); //end modifyUserCall
+      } else {
+        req.flash("success", "Success! That user was already a Manager.");
       }
-      req.flash('success', 'The user has been successfully promoted to Manager status');
-      req.flash('fade_out', '3000');
+
       res.redirect('/userManagement/' + badgeID);
-
-    });
-
+    }); //end validateUser call
   });
 
 
@@ -397,7 +499,6 @@ module.exports = function (passport) {
           res.status(500).send(err);
         }
       );
-
   });
 
   router.get('/userManagement/:badge', checkAuth, function (req, res) {
@@ -653,4 +754,15 @@ function checkRegistration(req, res, next) {
   } else {
     next();
   }
+}
+
+function saveCheckedValues(req, res, next) {
+  const allData = matchedData(req);
+  for (let val in allData) {
+    if (allData[val]) {
+      req.flash(val, allData[val]);
+    }
+  }
+
+  next();
 }
