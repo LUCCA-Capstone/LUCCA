@@ -431,11 +431,13 @@ module.exports = {
   //         eventClass - Type of event (e.g. badge-in, internal server error)
   //         event      - Stringed description of the event
   //         date       - Date in which the event occurred.
+  //         entity     - An arbitrary identifier string for the entity responsible
+  //                        for the log entry (user's badge, etc.)
   //Exceptions: ConnectionError, DatabaseError, QueryError,
   // ValidationError, Other
   //Description:  This function will record all interactivity between
   // the users and the database.  As well as all errors that occurred.
-  logEvent(eventClass, eventText, eventDate = undefined) {
+  logEvent(eventClass, entity, eventText, eventDate = undefined) {
     var returnStatus = { result: true, detail: 'Success' };
     let logData = {
       eventClass: eventClass, // A string representing the sort of event (e.g. access, error, management, start-stop)
@@ -443,6 +445,9 @@ module.exports = {
     }
     if (eventDate) {
       logData['eventDate'] = eventDate
+    }
+    if (entity) {
+      logData["entity"] = entity;
     }
 
     //Adds a new row to the event table
@@ -462,6 +467,8 @@ module.exports = {
   //         eventClass - Type of event (e.g. badge-in, internal server error)
   //         from       - Starting date
   //         to         - Ending date
+  //         entity     - An arbitrary identifier string for the entity responsible
+  //                        for the log entry (user's badge, etc.)
   //Exceptions: ConnectionError, DatabaseError, QueryError,
   // ValidationError, Other
   //Description:  This function will return a JSON object with all the events
@@ -469,7 +476,7 @@ module.exports = {
   // Additionally, this function will allow for requesting events
   // during a specific date range.  If both from and to are left undefined then all
   // results are returned.
-  getEvents(eventClass = undefined, from = undefined, to = undefined) {
+  getEvents(eventClass = undefined, entity = undefined, from = undefined, to = undefined){
     var queryParameters = {};
     var returnStatus = { result: true, detail: 'Success' };
     if (typeof (eventClass) != 'undefined') {
@@ -488,6 +495,9 @@ module.exports = {
       queryParameters["eventDate"] = {
         [Op.lte]: to
       }
+    }
+    if (typeof(entity) != 'undefined') {
+      queryParameters["entity"] = entity;
     }
     return log.findAll({
       where: queryParameters

@@ -11,6 +11,12 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
+      entity:
+      {
+        allowNull: false,
+        type: Sequelize.STRING,
+        defaultValue: "n/a"
+      },
       event: {
         allowNull: false,
         type: Sequelize.STRING(4096)
