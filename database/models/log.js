@@ -12,6 +12,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
+    entity:
+      {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: "n/a"
+      },
     event:
       {
         type: DataTypes.STRING(4096),
