@@ -440,6 +440,41 @@ module.exports = function (passport) {
   return router;
 }
 
+router.post('/userManagement/updateUserInfo/:badge', [
+  check('email')
+    .exists()
+    .isEmail().withMessage('Please enter valid email')
+    .trim()
+    .normalizeEmail()
+    .custom(value => {
+      return dbAPI.validateUser(value).then(user => {
+        if (user != undefined)
+          throw new Error('The email you provided is already in use');
+      });
+    })
+    .optional(),
+
+  check('phone')
+    .isMobilePhone('any').withMessage('Please enter valid phone number')
+    .optional(),
+
+  check('ecPhone')
+    .isMobilePhone('any').withMessage('Please enter valid emergency contact phone number')
+    .optional(),
+], function (req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    let mappedErrors = errors.mapped();
+    for (let val in mappedErrors) {
+      req.flash('error', mappedErrors[val]['msg']);
+    }
+  } else {
+    dbAPI.modifyUser(req.params.badge, req.body);
+    req.flash('success', 'Successfully updated user info');
+  }
+  res.redirect('/userManagement/' + req.params.badge);
+});
+
 
 var checkAuth = function (req, res, next) {
   if (req.isAuthenticated())

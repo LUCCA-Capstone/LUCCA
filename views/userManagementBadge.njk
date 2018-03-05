@@ -20,20 +20,32 @@
         <div class="table-responsive">
             <table  class="table table-bordered">
                 <tr>
-                    <th>Name</th>
-                    <td>{{user.first}} {{user.last}}</td>
+                    <th>First name</th>
+                    <td>
+                        <input type="text" name="first" class="form-control" id="firstName" value="{{user.first}}" data-initail="{{user.first}}">
+                    </td>
+                </tr>
+                <tr>
+                    <th>Last name</th>
+                    <td>
+                        <input type="text" name="last" class="form-control" id="lastName" value="{{user.last}}" data-initail="{{user.last}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Badge ID</th>
-                    <td>{{user.badge}}</td>
+                    <td id="badgeID">{{user.badge}}</td>
                 </tr>
                 <tr>
                     <th>Email</th>
-                    <td>{{user.email}}</td>
+                    <td>
+                        <input type="email" name="email" class="form-control" id="userEmail" value="{{user.email}}" data-initail="{{user.email}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Phone</th>
-                    <td>{{user.phone}}</td>
+                    <td>
+                        <input type="phone" name="phone" class="form-control" id="userPhone" value="{{user.phone}}" data-initail="{{user.phone}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Signature</th>
@@ -45,15 +57,21 @@
                 </tr>
                 <tr>
                     <th>Emergency contact name</th>
-                    <td>{{user.ecName}}</td>
+                    <td>
+                        <input type="text" name="ecName" class="form-control" id="ecName" value="{{user.ecName}}" data-initail="{{user.ecName}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Emergency relationship</th>
-                    <td>{{user.ecRel}}</td>
+                    <td>
+                        <input type="text" name="ecRel" class="form-control" id="ecRel" value="{{user.ecRel}}" data-initail="{{user.ecRel}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Emergency phone number</th>
-                    <td>{{user.ecPhone}}</td>
+                    <td>
+                        <input type="text" name="ecPhone" class="form-control" id="ecPhone" value="{{user.ecPhone}}" data-initail="{{user.ecPhone}}">
+                    </td>
                 </tr>
                 <tr>
                     <th>Status</th>
@@ -84,8 +102,9 @@
                             <form id="ChangeStatusToManager" action="/userManagement/demoteManager/{{user.badge}}" method="post" onsubmit="return confirm('This user will be User!')">
                             <button type='submit' class="btn btn-primary" name='submit' value="">Demote to User</button>
                             </form>
-                        {% endif %}
-                                
+                        {% endif %}  
+                            <br>
+                            <button class="btn btn-primary" name='updateUser' id="updateUser">Save/Update User Information</button>
                         </td>
                     {% else %}
                         <td>
@@ -109,7 +128,7 @@
         </div>
     </div>
 
-{# Station listing #}
+    {# Station listing #}
     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
         <div class="table-responsive">
             <table  class="table table-bordered">
@@ -156,3 +175,6 @@
 </div>
 {% endblock %}
 
+{% block custom_scripts %}
+  <script src="/javascripts/updateUserInfo.js"></script>
+{% endblock %}
