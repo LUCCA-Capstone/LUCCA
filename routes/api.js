@@ -24,6 +24,7 @@ router.post('/user-access', function(req, res, next) {
   var bodyObj = req.body;
   var cert = req.socket.getPeerCertificate();
   // Until a better solution is found this is used for chai testing
+  // FIXME: This is a nasty hack that needs to be fixed before shipping
   if (Object.keys(cert).length === 0) {
     cert = {
       'subject': {
@@ -33,19 +34,21 @@ router.post('/user-access', function(req, res, next) {
   };
   db.getStation(headerObj['station-id']).then(function(station) {
     if(!station) {
+      //console.log('Received a user-access action from an unknown station-id: ' + headerObj['station-id']);
       return res.sendStatus(403);
     } 
     else if (!station.registered) {
-      if (station.certCN !== cert.subject.CN) {
-        db.modifyStation(headerObj['station-id'], {certCN: cert.subject.CN}).then(function(response) {
-          db.logEvent('station', headerObj['station-id'], "Heartbeat for unregistered station with ID '" + headerObj['station-id'] + "' provided a new station CN. Changing to '" + cert.subject.CN + "'");
-        });
-      }
+      db.logEvent('station', undefined, "Received a user-access action from an unregistered station advertising station-id " + headerObj['station-id'] ).catch(err=> {;
+        console.log(err);
+      });
+      //console.log('Received a user-access action from an offline station with station-id: ' + headerObj['station-id']);
       return res.sendStatus(403); 
     }
     else if (station.certCN !== cert.subject.CN) {
-      db.logEvent('station', headerObj['station-id'], "Heartbeat for station with ID '" + headerObj['station-id'] + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").then(function(response) {
+      db.logEvent('station', headerObj['station-id'], "Received a user-access action with a mismatched cert CN for station-id: (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").catch(err => {
+        console.log(err);
       });
+      //console.log('Received a user-access action with a mismatched cert CN for station-id: ' + headerObj['station-id']);
       return res.sendStatus(403);
     } 
     var checkMachine = stationLog.getMachine(headerObj['station-id']);
@@ -53,22 +56,22 @@ router.post('/user-access', function(req, res, next) {
       checkMachine = stationLog.addMachine(headerObj['station-id']);
     };
     var userWaiting = cache.getMachine(headerObj['station-id'], timer);
-
-    db.validateUser(bodyObj.badge).then(function(person) {
+    db.getLoggedIn(bodyObj).then(function(person) {
       if(!person) {
+        //console.log('Received a user-access action from station-id ' + headerObj['station-id'] + ' for an unknown user with badge: ' + bodyObj);
         return res.sendStatus(403);
       }
-      else if (person.dataValues.status === 'Admin') {
+      else if (person.status === 'Admin') {
         res.locals.obj = {
-          'status': person.dataValues.status,
-          'user': person.dataValues.last+','+person.dataValues.first, 
-          'badge': person.dataValues.badge,
+          'status': person.status,
+          'user': person.last+','+person.first, 
+          'badge': person.badge,
           'station': headerObj['station-id'],
           'destination': null, 
           'userInCache': null,
           'access': true
         };
-        if(userWaiting && headerObj['station-state'] === 'disabled'){
+        if(userWaiting && headerObj['station-state'] === 'Disabled'){
           res.locals.obj.destination = 'cache',
           res.locals.obj.userInCache = userWaiting;
           next();
@@ -77,20 +80,22 @@ router.post('/user-access', function(req, res, next) {
          next(); 
         }
       } 
-      else if (person.dataValues.status === 'Manager') {
+      else if (person.status === 'Manager') {
         res.locals.obj = {
-          'status': person.dataValues.status,
-          'user': person.dataValues.last+','+person.dataValues.first, 
-          'badge': person.dataValues.badge,
+          'status': person.status,
+          'user': person.last+','+person.first, 
+          'badge': person.badge,
           'station': headerObj['station-id'],
           'destination': null, 
           'userInCache': null,
           'access': false
         };
-        if(userWaiting && headerObj['station-state'] === 'disabled') {
-          db.getPrivileges(bodyObj.badge).then(function(privs) {
+        if(userWaiting && headerObj['station-state'] === 'Disabled') {
+          db.getPrivileges(bodyObj).then(function(privs) {
             var canLogOntoMachine = false;
             if(!privs) {
+              // FIXME: Add logging for this event
+              //console.log('Received a user-access action from station-id ' + headerObj['station-id'] + ' for a manager without station privileges from manager with badge: ' + bodyObj);
               return res.sendStatus(403);
             }
             else {
@@ -102,14 +107,17 @@ router.post('/user-access', function(req, res, next) {
                 res.locals.obj.userInCache = userWaiting
                 next();
               } else {
+                // FIXME: Add logging for this event
+                //console.log('Received a user-access action from station-id ' + headerObj['station-id'] + ' for a manager without station privileges from manager with badge: ' + bodyObj);
                 return res.sendStatus(403);
-              };  
+              };
             };
           }).catch((error) => {
+            console.log(error);
             return res.sendStatus(500, error);
           });
-        } else if (userWaiting === null && headerObj['station-state'] === 'disabled') {
-          db.getPrivileges(bodyObj.badge).then(function(privs) {
+        } else if (userWaiting === null && headerObj['station-state'] === 'Disabled') {
+          db.getPrivileges(bodyObj).then(function(privs) {
             var canLogOntoMachine = false;
             if(!privs) {
               res.locals.obj.destination = 'cache';
@@ -130,6 +138,7 @@ router.post('/user-access', function(req, res, next) {
               } 
             }
           }).catch((error) => {
+            console.log(error);
             return res.sendStatus(500, error);
           });
         } else {
@@ -137,16 +146,16 @@ router.post('/user-access', function(req, res, next) {
           next();
         }
       }
-      else if (person.dataValues.status === 'User') {
+      else if (person.status === 'User') {
         res.locals.obj = {
-          'status': person.dataValues.status,
-          'user': person.dataValues.last+','+person.dataValues.first, 
-          'badge': person.dataValues.badge,
+          'status': person.status,
+          'user': person.last+','+person.first, 
+          'badge': person.badge,
           'station': headerObj['station-id'],
           'destination': null,
           'access': false
         };
-        db.getPrivileges(bodyObj.badge).then(function(privs) {
+        db.getPrivileges(bodyObj).then(function(privs) {
           var canLogOntoMachine = false;
           if(!privs) {
             res.locals.obj.destination = 'cache'
@@ -165,15 +174,19 @@ router.post('/user-access', function(req, res, next) {
             };  
           };
         }).catch((error) => {
+          console.log(error);
           return res.sendStatus(500, error);
         });
       } else {
+        //console.log('Received a user-access action from station-id ' + headerObj['station-id'] + ' for a user without station privileges from user with badge: ' + bodyObj);
         return res.sendStatus(403);
       }
     }).catch((error) => {
+          console.log(error);
         return res.sendStatus(500, error);
     });
   }).catch((error) => {
+          console.log(error);
       return res.sendStatus(500, error);
   });
 });
@@ -185,10 +198,12 @@ router.post('/user-access', function(req, res, next) {
     let anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
     let amIonMoreThanOneMachine = stationLog.getAll();
     if(anyOneOnMachine.badge !== null) {
+      //console.log('Received a user-access action from station-id ' + req.headers['station-id'] + ' that would have granted station training to : ' + bodyObj + ' but another user is currently logged on to the station');
       return res.sendStatus(403);
     }
     for(element in amIonMoreThanOneMachine) {
       if (amIonMoreThanOneMachine[element].badge === res.locals.obj.userInCache['badge']) {
+        //console.log('Received a user-access action from station-id ' + req.headers['station-id'] + ' that would have granted station training to : ' + bodyObj + ' but that user is logged in elsewhere');
         return res.sendStatus(403);
       };
     };
@@ -196,30 +211,37 @@ router.post('/user-access', function(req, res, next) {
       let user = res.locals.obj.badge;
       let userInCache = res.locals.obj.userInCache['badge'];
       let station = res.locals.obj.station;
-      db.logEvent('privilege', userInCache, 'Granted training on station with id ' + station + ' (by ' + user + ')').then(function(){
-        cache.delete(req.headers['station-id']);
-        stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
-        res.set({
-          'Content-Type': 'text/plain',
-          'station-state': 'enabled',
-          'User-ID-String': res.locals.obj.userInCache['user']
-        });
-        return res.sendStatus(200);
+      db.logEvent('privilege', userInCache, 'Granted training on station with id ' + station + ' (by ' + user + ')').catch(err => {
+        console.log(err);
       });
+      cache.delete(req.headers['station-id']);
+      stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
+      res.set({
+        'Content-Type': 'text/plain',
+        'station-state': 'Enabled',
+        'User-ID-String': res.locals.obj.userInCache['user']
+      });
+      return res.sendStatus(200);
+    }).catch(err => {
+      console.log(err);
+      return res.sendStatus(500);
     });
   } 
   else if(res.locals.obj.destination === 'cache' && !res.locals.obj.access) {
     let amIonMoreThanOneMachine = stationLog.getAll();
     let anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
     if(anyOneOnMachine.badge !== null) {
+      //console.log('Received station-access action from station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', but the station is in use by someone else');
       return res.sendStatus(403);
     }
     for(element in amIonMoreThanOneMachine) {
       if (amIonMoreThanOneMachine[element].badge === res.locals.obj.badge) {
+        //console.log('Received station-access action from station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', but that user is using another station already');
         return res.sendStatus(403);
       };
     };
     cache.save(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
+    //console.log('Received station-access action from station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', who does not have station training. Adding user to the training request cache.');
     return res.sendStatus(403);
   } else {
     next();
@@ -229,11 +251,12 @@ router.post('/user-access', function(req, res, next) {
 
 // handle log on
 router.post('/user-access', function(req, res, next) {
-  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'disabled') {
+  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'Disabled') {
     var anyOneOnMachine = stationLog.getMachine(req.headers['station-id']);
     var amIonMoreThanOneMachine = stationLog.getAll();
     for(element in amIonMoreThanOneMachine) {
       if (amIonMoreThanOneMachine[element].badge === res.locals.obj.badge) {
+        //console.log('Received station-access request to check out station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', but this user is using another station already');
         return res.sendStatus(403);
       };
     };
@@ -245,11 +268,12 @@ router.post('/user-access', function(req, res, next) {
       });
       res.set({
         'Content-Type': 'text/plain',
-        'station-state': 'enabled',
+        'station-state': 'Enabled',
         'User-ID-String': res.locals.obj.user
       })
       return res.sendStatus(200);
     } else {
+      //console.log('Received station-access request to check out station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', but the station is already in use by someone else');
       return res.sendStatus(403);
     }
   } 
@@ -259,13 +283,13 @@ router.post('/user-access', function(req, res, next) {
 
 //handle log off
 router.post('/user-access', function(req, res, next) {
-  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'enabled') {
+  if(res.locals.obj.destination === 'log' && req.headers['station-state'] === 'Enabled') {
     var amIonThisMachine = stationLog.getMachine(req.headers['station-id']);
     if(amIonThisMachine.badge === res.locals.obj.badge) {
       stationLog.removeUser(res.locals.obj.badge, req.headers['station-id']);
       res.set({
         'Content-Type': 'text/plain',
-        'station-state': 'disabled',
+        'station-state': 'Disabled',
       });
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
@@ -273,10 +297,11 @@ router.post('/user-access', function(req, res, next) {
       });
       return res.sendStatus(200);
     } else {
+      //console.log('Received station-access request to check in station-id ' + req.headers['station-id'] + ' for user with badge ' + res.locals.obj.badge + ', but this user is not currently using this station');
       return res.sendStatus(403);
     }
-  } 
-  else {
+  } else {
+    //console.log('Received station-acces request from station-id ' + req.headers['station-id'] + ' which fell through to last-case route handling, but headers do not match');
     res.sendStatus(403);
   }
 });
@@ -329,10 +354,10 @@ router.post('/station-heartbeat', function(req, res) {
           }
         });
       }
-    }).catch((error) => {
+    }).catch(err => {
       //Internal error in database
-      console.log();
-      res.sendStatus(500, error);
+      console.log(err);
+      res.sendStatus(500);
     });
   } else {
     res.sendStatus(401);
@@ -369,13 +394,14 @@ router.post('/local-reset', function(req, res){
           });
         }
       }else{
-        db.logEvent('station', undefined, 'local-reset API action received from an unknown station ID: ' + sid).then(function() {
-        res.sendStatus(403);
+        db.logEvent('station', undefined, 'local-reset API action received from an unknown station ID: ' + sid).catch(err => {
+          console.log(err);
         });
+        res.sendStatus(403);
       }
     }).catch(err => {
-      console.log('Caught an error in /api/local-reset route handler while attempting to retrieve station data from database. This is probably either due to an error communicating with the database, or to a malformed station-id in the request header.');
-      res.sendStatus(500);
+        console.log(err);
+        res.sendStatus(500);
     });
   }else{
     res.sendStatus(400);
@@ -409,14 +435,14 @@ router.get('/last-state', function(req, res){
             if(obj.status === 'enabled'){
               res.set({
                 'Content-Type': 'text/plain',
-                'station-state': 'enabled',
+                'station-state': 'Enabled',
                 'user-id-string': obj.user
               });
               res.sendStatus(200);
             }else{
               res.set({
                 'Content-Type': 'text/plain',
-                'station-state': 'disabled',
+                'station-state': 'Disabled',
               });
               res.sendStatus(200);
             }
@@ -426,7 +452,7 @@ router.get('/last-state', function(req, res){
             if(stationLog.addMachine(sid)){
               res.set({
                 'Content-Type': 'text/plain',
-                'station-state': 'disabled',
+                'station-state': 'Disabled',
               });
               res.sendStatus(200);
             }else{

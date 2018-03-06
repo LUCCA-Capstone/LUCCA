@@ -1,5 +1,6 @@
 var chai = require('chai');
 var request = require('request');
+var childProcess = require('child_process');
 var assert = chai.assert;
 var expect = chai.expect;
 var fs = require('fs');
@@ -44,28 +45,28 @@ var testStationOne = {
   name: 'Cutter',
   description: 'Cut shit',
   registered: true,
-  certCN: 'localhost:3001'
+  certCN: 'localhost'
 };
 var testStationTwo = {
   sId: '456DEF',
   name: 'Grinder',
   description: 'Grind shit',
   registered: true,
-  certCN: 'localhost:3001'
+  certCN: 'localhost'
 };
 var testStationThree = {
   sId: '789HIJ',
   name: 'Watcher',
   description: 'Watch shit',
   registered: true,
-  certCN: 'localhost:3001'
+  certCN: 'localhost'
 };
 var testStationFour = {
   sId: '123KLM',
   name: 'Cooker',
   description: 'Cook shit',
   registered: true,
-  certCN: 'localhost:3001'
+  certCN: 'localhost'
 };
 
 
@@ -120,31 +121,37 @@ describe('Create testing environment', function () {
     }); 
   });
   it('Complete Data should create new User', function (done) {
-    controllers.createUser(admin).done(function (results) {
-      expect(results.result).to.equal(true);
-      done();
+    controllers.createUser(admin).then(function (res) {
+      controllers.modifyUser(admin.badge, {'loggedIn': true}).then(function (results) {
+        expect(results.result).to.equal(true);
+        done();
+      });
     });
   });
   it('Complete Data should create new User', function (done) {
-    controllers.createUser(manager).done(function (results) {
-      expect(results.result).to.equal(true);
-      done();
+    controllers.createUser(manager).then(function (res) {
+      controllers.modifyUser(manager.badge, {'loggedIn': true}).then(function (results) {
+        expect(results.result).to.equal(true);
+        done();
+      });
     });
   });
   it('Complete Data should create new User', function (done) {
-    controllers.createUser(user).done(function (results) {
-      expect(results.result).to.equal(true);
-      done();
+    controllers.createUser(user).then(function (res) {
+      controllers.modifyUser(user.badge, {'loggedIn': true}).then(function (results) {
+        expect(results.result).to.equal(true);
+        done();
+      });
     });
   });
   it('Should update admin to admin status', function (done) {
-    controllers.modifyUser(admin.badge, { 'status': 'Admin' }).done(function (results) {
+    controllers.modifyUser(admin.badge, { 'status': 'Admin' }).then(function (results) {
       expect(results.result).to.equal(true);
       done();
     });
   });
   it('Should update manager to manager status', function (done) {
-    controllers.modifyUser(manager.badge, { 'status': 'Manager' }).done(function (results) {
+    controllers.modifyUser(manager.badge, { 'status': 'Manager' }).then(function (results) {
       expect(results.result).to.equal(true);
       done();
     });
@@ -202,304 +209,171 @@ describe('Create testing environment', function () {
 
 describe('Test API user-access logging in and logging off', function () {
   it('should add an admin to machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'disabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', admin.last+','+admin.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'python3 test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationOne.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should add manager to machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'disabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', manager.last+','+manager.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationTwo.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
   });
   it('should add user to machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationThree.sId, 'station-state': 'disabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', user.last+','+user.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationThree.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should log admin off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'enabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationOne.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
   });
   it('should log manager off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'enabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  });      
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationTwo.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should log user off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationThree.sId, 'station-state': 'enabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  });   
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationThree.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
 });
 
 
-describe('Teset API user-access, users can not kick off other users', function () { 
+describe('Reset API user-access, users can not kick off other users', function () { 
   it('Should log manager onto machine 3', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationThree.sId, 'station-state': 'disabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.headers).to.have.property('user-id-string', manager.last+','+manager.first);
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  });   
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationThree.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('Should keep the user from logging onto machine 3, because a manager is on it status 403', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationThree.sId, 'station-state': 'enabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationThree.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
   });
   it('should log manager off machine 3', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationThree.sId, 'station-state': 'enabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  });         
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationThree.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should log an admin onto machine 2', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'disabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', admin.last+','+admin.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
+    let cmd = "test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i " + testStationTwo.sId + " -u " + admin.badge + "\n";
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
   });
   it('Should keep manager from logging onto machine 2 status because a admin is on it, return status 403', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'enabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  });    
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationTwo.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
   it('should log admin off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'enabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationTwo.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
   });
 });
 
 
 describe('Teset API user-access, test caching.', function () { 
   it('should add user to cache so they can be granted permission to station 1', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'disabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationOne.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
   it('Admin will give the user in cache privileges to use machine 1', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'disabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', user.last+','+user.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationOne.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should log user off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'enabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  });   
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationOne.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should add user to cache so they can be granted permission to station 2', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'disabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationTwo.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
   it('should allow manager to grant access to user to station 2', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'disabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', user.last+','+user.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationTwo.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should log user off machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationTwo.sId, 'station-state': 'enabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('station-state', 'disabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify --station-active -A user-access -i ' + testStationTwo.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should add user to cache so they can be granted permission to station 4', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationFour.sId, 'station-state': 'disabled'}, 
-      form:({'badge': user.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationFour.sId + ' -u ' + user.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
   it('should not allow manager to grant privs to user because manager does not have prives to station 4,', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationFour.sId, 'station-state': 'disabled'}, 
-      form:({'badge': manager.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationFour.sId + ' -u ' + manager.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
 });
 
 
 describe('Test API user-access, not allow a user to log in more than 1 machine', function () {
   it('should add an admin to machine', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'disabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.headers).to.have.property('user-id-string', admin.last+','+admin.first);
-        expect(response.headers).to.have.property('station-state', 'enabled');
-        expect(response.statusCode).to.equal(200);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationOne.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 200)\n');
+      done();
+    });
+  });
   it('should return 403, not allow admin to be on 2 machines', function(done) {
-    request.post({url:'https://localhost:3001/api/user-access', 
-      ca:cert, 
-      headers:{'station-id': testStationOne.sId, 'station-state': 'disabled'}, 
-      form:({'badge': admin.badge })}, 
-      function(error, response, body){
-        if (error) {console.error(error);}
-        expect(response.statusCode).to.equal(403);
-        done();
-      }
-    );	
-  }); 
+    let cmd = 'test/bin/station-sim.py3 -C test/cert/combined.pem -c localhost:3001 --no-verify -A user-access -i ' + testStationTwo.sId + ' -u ' + admin.badge;
+    childProcess.exec(cmd, function(error, stdout, stderr){
+      expect(stdout).to.equal('Response valid, all constraints met (status code 403)\n');
+      done();
+    });
+  });
 })
 
 
@@ -541,21 +415,21 @@ describe('Clean up testing environment', function () {
     });
   });
   it('Should remove admin', function (done) {
-    controllers.deleteUser(admin.badge).done(function (results) {
+    controllers.deleteUser(admin.badge).then(function (results) {
       expect(results).to.equal(true);
       done();
     });
-  });	
+  });
   it('Should remove manager', function (done) {
-    controllers.deleteUser(manager.badge).done(function (results) {
+    controllers.deleteUser(manager.badge).then(function (results) {
       expect(results).to.equal(true);
       done();
     });
-  });	
+  });
   it('Should remove user', function (done) {
-    controllers.deleteUser(user.badge).done(function (results) {
+    controllers.deleteUser(user.badge).then(function (results) {
       expect(results).to.equal(true);
       done();
     });
-  });	
+  });
 });

@@ -126,7 +126,8 @@ def user_access(cert, use_ssl=True, verify=True, controller=_defaults['controlle
   """
   schema = 'https://' if use_ssl else 'http://'
   headers={ 'Station-ID' : station_id,
-            'Station-State' : 'Enabled' if active else 'Disabled' }
+            'Station-State' : 'Enabled' if active else 'Disabled',
+            'Content-Type' : 'text/plain' }
   s = requests.Session()
   req = requests.Request('POST', schema + controller + '/api/user-access', data=user_id, headers=headers)
   prep = req.prepare()

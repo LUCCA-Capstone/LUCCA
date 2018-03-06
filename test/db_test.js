@@ -141,7 +141,7 @@ describe('DB TEST', function () {
 
   describe('createUser Empty Dataset', function () {
     it('Empty JSON object Should Cause Fail', function (done) {
-      controllers.createUser(emptyData).done(function (results) {
+      controllers.createUser(emptyData).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -150,7 +150,7 @@ describe('DB TEST', function () {
 
   describe('createUser Incomplete Dataset', function () {
     it('Null Data Entry Should Cause Fail', function (done) {
-      controllers.createUser(incompleteData).done(function (results) {
+      controllers.createUser(incompleteData).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -159,7 +159,7 @@ describe('DB TEST', function () {
 
   describe('createUser Complete Dataset', function () {
     it('Complete Data should create new User', function (done) {
-      controllers.createUser(trueData).done(function (results) {
+      controllers.createUser(trueData).then(function (results) {
         expect(results.result).to.equal(true);
         done();
       });
@@ -168,7 +168,7 @@ describe('DB TEST', function () {
 
   describe('validateUser with badge', function () {
     it('Return the userData object as specified by createUser input', function (done) {
-      controllers.validateUser(trueData['badge']).done(function (results) {
+      controllers.validateUser(trueData['badge']).then(function (results) {
         expect(results['badge']).to.equal(trueData['badge']);
         done();
       });
@@ -177,7 +177,7 @@ describe('DB TEST', function () {
 
   describe('validateUser with email', function () {
     it('Return the userData object as specified by createUser input', function (done) {
-      controllers.validateUser(trueData['email']).done(function (results) {
+      controllers.validateUser(trueData['email']).then(function (results) {
         expect(results['email']).to.equal(trueData['email']);
         done();
       });
@@ -186,7 +186,7 @@ describe('DB TEST', function () {
 
   describe('validateUser no user exists', function () {
     it('Return undefined', function (done) {
-      controllers.validateUser('U DONT EXIST').done(function (results) {
+      controllers.validateUser('U DONT EXIST').then(function (results) {
         expect(results).to.equal(undefined);
         done();
       });
@@ -195,7 +195,7 @@ describe('DB TEST', function () {
 
   describe('createUser primary Key violation', function () {
     it('Same complete data should cause primary key fail', function (done) {
-      controllers.createUser(trueData).done(function (results) {
+      controllers.createUser(trueData).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -204,7 +204,7 @@ describe('DB TEST', function () {
 
   describe('createUser unique email constraint', function () {
     it('Should cause unique key fail', function (done) {
-      controllers.createUser(trueData2).done(function (results) {
+      controllers.createUser(trueData2).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -213,7 +213,7 @@ describe('DB TEST', function () {
 
   describe('deleteUser', function () {
     it('Remove New User by id', function (done) {
-      controllers.deleteUser(trueData.badge).done(function (results) {
+      controllers.deleteUser(trueData.badge).then(function (results) {
         expect(results).to.equal(true);
         done();
       });
@@ -358,14 +358,14 @@ describe('DB TEST', function () {
 
   describe('getEvents testing', function(){
     it('Get all logged events (should return a list containing at least four events)', function(done){
-      controllers.getEvents().done(function(results){
+      controllers.getEvents().then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(3);
         done();
       });
     });
 
     it('Get all logged events with class test_event (should return a list containing at least three events)', function(done){
-      controllers.getEvents('test_event').done(function(results){
+      controllers.getEvents('test_event').then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('test_event');
@@ -374,7 +374,7 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged with an event_class of also_test_event (should return a list containing one event)', function(done){
-      controllers.getEvents('also_test_event').done(function(results){
+      controllers.getEvents('also_test_event').then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('also_test_event');
@@ -383,13 +383,13 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged with an event_class of no_such_class (should return a list containing nothing)', function(done){
-      controllers.getEvents('no_such_class').done(function(results){
+      controllers.getEvents('no_such_class').then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf(0);
         done();
       });
     });
     it('Get all events logged after 2005 (should return a list containing one event)', function(done){
-      controllers.getEvents(undefined, undefined, from=new Date('1-1-2005')).done(function(results){
+      controllers.getEvents(undefined, undefined, from=new Date('1-1-2005')).then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.above(from);
@@ -398,7 +398,7 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged before 2005 (should return a list containing three events)', function(done){
-      controllers.getEvents(undefined, undefined,  undefined, to=new Date('1-1-2005')).done(function(results){
+      controllers.getEvents(undefined, undefined,  undefined, to=new Date('1-1-2005')).then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.not.above(to);
@@ -407,13 +407,13 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged after 2050 (should return a list containing zero events)', function(done){
-      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2050')).done(function(results){
+      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2050')).then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf(0);
         done();
       });
     });
     it('Get all events logged after 2005 but before 2050 (should return a list containing three events)', function(done){
-      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
+      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.above(from).and.not.above(to);
@@ -422,7 +422,7 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged after 2005 but before 2050 with event class test_event (should return a list containing two events)', function(done){
-      controllers.getEvents('test_event', undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
+      controllers.getEvents('test_event', undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).then(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(1);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('test_event');
@@ -505,7 +505,7 @@ describe('DB TEST', function () {
 
   describe('getUser + two undefined dates', function () {
     it('Should return full set of users', function (done) {
-      controllers.getUsers(startDate, endDate).done(function (results) {
+      controllers.getUsers(startDate, endDate).then(function (results) {
         //console.log(results);
         expect(results).to.have.length.above(1);
         //expect(results.result).to.equal(true);
@@ -517,7 +517,7 @@ describe('DB TEST', function () {
 
   describe('getUser + one undefined date', function () {
     it('Should return subset of users from a start date', function (done) {
-      controllers.getUsers(startDate, endDate).done(function (results) {
+      controllers.getUsers(startDate, endDate).then(function (results) {
         expect(results).to.have.length.above(1);
         done();
         endDate = '2000-01-02'
@@ -527,7 +527,7 @@ describe('DB TEST', function () {
 
   describe('getUser + two dates + out of range', function () {
     it('Should return empty set of data', function (done) {
-      controllers.getUsers(startDate, endDate).done(function (results) {
+      controllers.getUsers(startDate, endDate).then(function (results) {
         expect(results).to.have.length(0);
         done();
         startDate = '2018-02-02';
@@ -538,7 +538,7 @@ describe('DB TEST', function () {
 
   describe('getUser + two dates + in range', function () {
     it('Should return subset of data', function (done) {
-      controllers.getUsers(startDate, endDate).done(function (results) {
+      controllers.getUsers(startDate, endDate).then(function (results) {
         expect(results).to.have.length.above(0);
         done();
       });
@@ -551,7 +551,7 @@ describe('DB TEST', function () {
 
   describe('modifyUser invalid badge id', function () {
     it('Should not update and return status false', function (done) {
-      controllers.modifyUser('fake badge id', { 'password': 'fake' }).done(function (results) {
+      controllers.modifyUser('fake badge id', { 'password': 'fake' }).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -560,7 +560,7 @@ describe('DB TEST', function () {
 
   describe('modifyUser + valid badge id + valid attribute field + null value', function () {
     it('Should not update table.  Desired update attribute cannot be null.  Return status false', function (done) {
-      controllers.modifyUser('1234567', { 'first': null }).done(function (results) {
+      controllers.modifyUser('1234567', { 'first': null }).then(function (results) {
         expect(results.result).to.equal(false);
         done();
       });
@@ -569,7 +569,7 @@ describe('DB TEST', function () {
 
   describe('modifyUser + valid badge id + valid attribute field + null value', function () {
     it('Should update table.  Desired attribute can be null.  Return status true', function (done) {
-      controllers.modifyUser('1234567', { 'password': null }).done(function (results) {
+      controllers.modifyUser('1234567', { 'password': null }).then(function (results) {
         expect(results.result).to.equal(true);
         done();
       });
@@ -578,7 +578,7 @@ describe('DB TEST', function () {
 
   describe('modifyUser + valid badge id + valid attribute field + value', function () {
     it('Should update table attribute, return status true', function (done) {
-      controllers.modifyUser('1234567', { 'password': 'fart' }).done(function (results) {
+      controllers.modifyUser('1234567', { 'password': 'fart' }).then(function (results) {
         expect(results.result).to.equal(true);
         done();
       });
@@ -587,7 +587,7 @@ describe('DB TEST', function () {
 
   describe('modifyUser + valid badge id + invalid attribute field', function () {
     it('Should not update table attribute.  Return status true', function (done) {
-      controllers.modifyUser('1234567', { 'passowrd': 'lalala' }).done(function (results) {
+      controllers.modifyUser('1234567', { 'passowrd': 'lalala' }).then(function (results) {
         expect(results.result).to.equal(true);
         done();
       });
