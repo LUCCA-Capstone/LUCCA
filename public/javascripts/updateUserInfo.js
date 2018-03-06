@@ -3,7 +3,11 @@ $(function () {
     let updatedData = {};
 
     $('input').each(function (index) {
-      if ($(this).val().trim() !== $(this).attr('data-initail').trim()) {
+      if ($(this).attr('type') === 'checkbox') {
+        if ($(this).prop('checked') != ($(this).attr('data-initial') === 'true')) {
+          updatedData['mailingList'] = $(this).prop('checked');
+        }
+      } else if ($(this).val().trim() !== $(this).attr('data-initial').trim()) {
         let key = $(this).prop('name');
         let value = $(this).val();
         updatedData[key] = value;
