@@ -105,6 +105,7 @@ module.exports = {
       email: userData.email,               //email
       phone: userData.phone,               //users phone #
       signature: userData.signature,       //users signature
+      major: userData.major,               //users major
       ecSignature: userData.ecSignature,   //emergency contact signature
       ecName: userData.ecName,             //emergency contact name
       ecRel: userData.ecRel,               //emergency contact relation

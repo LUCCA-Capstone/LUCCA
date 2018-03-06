@@ -9,6 +9,7 @@ module.exports = {
     email: 'admin@admin.com',
     phone: '555-555-5555',
     signature: 'admin',
+    major: 'hustlin',
     ecSignature: 'admin',
     ecName: 'admin',
     ecRel: 'admin',

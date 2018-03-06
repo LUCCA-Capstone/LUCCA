@@ -14,6 +14,7 @@ var incompleteData = {
   "email": "123@gmail.com",
   "phone": "(555)555-5555",
   "signature": "Rory Eats",
+  "major": "Gonna hustle",
   "ecName": "Hello HowareU",
   "ecRel": "Father",
   "ecPhone": "(555)444-4444"
@@ -26,6 +27,7 @@ var trueData = {
   "email": "123@gmail.com",
   "phone": "(555)555-5555",
   "signature": "Rory Eats",
+  "major": "Gonna hustle",
   "ecName": "Hello HowareU",
   "ecRel": "Father",
   "ecPhone": "(555)444-4444"
@@ -38,6 +40,7 @@ var trueData2 = {
   "email": "123@gmail.com",
   "phone": "(555)555-5555",
   "signature": "Rory Eats",
+  "major": "Gonna hustle",
   "ecName": "Hello HowareU",
   "ecRel": "Father",
   "ecPhone": "(555)444-4444"

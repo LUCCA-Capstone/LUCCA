@@ -28,6 +28,10 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
+      major: {
+        allowNull: false,
+        type: Sequelize.STRING
+      },
       ecSignature: {
         defaultValue: null,
         type: Sequelize.STRING

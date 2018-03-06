@@ -33,6 +33,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       },
+    major:
+      {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
     ecSignature:
       {
         type: DataTypes.STRING,
