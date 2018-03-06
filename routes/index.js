@@ -176,19 +176,6 @@ module.exports = function (passport) {
   ], checkRegistration, jsonParser, postBadgeIn);
 
 
-  router.get('/badgeinSuccess', function (req, res) {
-    res.render('badgeinSuccess.njk', { authenticated: req.isAuthenticated() });
-  });
-
-
-  router.post('/badgeinSuccess', jsonParser, function (req, res) {
-    if (!req.body) {
-      return res.sendStatus(400);
-    }
-    res.redirect('/badgein');
-  });
-
-
   router.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
@@ -246,6 +233,8 @@ module.exports = function (passport) {
     dbAPI.deleteUser(DeletedBadge).then(function (result) {
       console.log("user is deleted successfully");
     });
+    req.flash('success', 'The user has been successfully deleted from the system');
+    req.flash('fade_out', '3000');
     res.redirect('/userManagement');
   });
 
@@ -254,8 +243,8 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
-    dbAPI.modifyUser(BagdeID, { confirmation: true }).then(function (result) {
+    var badgeID = req.params.badge;
+    dbAPI.modifyUser(badgeID, { confirmation: true }).then(function (result) {
       if (result == undefined) {
         console.log("Error");
       }
@@ -263,7 +252,9 @@ module.exports = function (passport) {
         console.log("confirmation changed successfully");
       }
     });
-    res.redirect('/userManagement/' + BagdeID);
+    req.flash('success', 'This user is confirmed successfully');
+    req.flash('fade_out', '3000');
+    res.redirect('/userManagement/' + badgeID);
   });
 
 
@@ -271,12 +262,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
+    var badgeID = req.params.badge;
     var StationID = req.params.station;
-    dbAPI.removePrivileges(BagdeID, StationID).then(function (result) {
+    dbAPI.removePrivileges(badgeID, StationID).then(function (result) {
       console.log(result);
     });
-    res.redirect('/userManagement/' + BagdeID);
+    req.flash('success', 'The users access to the selected station has been revoked');
+    req.flash('fade_out', '3000');
+    res.redirect('/userManagement/' + badgeID);
   });
 
 
@@ -284,12 +277,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
+    var badgeID = req.params.badge;
     var StationID = req.params.station;
-    dbAPI.grantPrivileges(BagdeID, StationID).then(function (result) {
+    dbAPI.grantPrivileges(badgeID, StationID).then(function (result) {
       console.log(result);
     });
-    res.redirect('/userManagement/' + BagdeID);
+    req.flash('success', 'The user has been successfully granted access to the selected station');
+    req.flash('fade_out', '3000');
+    res.redirect('/userManagement/' + badgeID);
 
   });
 
@@ -298,14 +293,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
+    var badgeID = req.params.badge;
 
-    dbAPI.validateUser(BagdeID).then(function (ret) {
+    dbAPI.validateUser(badgeID).then(function (ret) {
       console.log(ret.dataValues);
       console.log("USER STATUS " + ret.status);
 
       if (ret.status == "User" && ret.status != "Admin") {
-        dbAPI.modifyUser(BagdeID, { status: "Manager" }).then(function (result) {
+        dbAPI.modifyUser(badgeID, { status: "Manager" }).then(function (result) {
           if (result == undefined) {
             console.log("Error");
           }
@@ -314,7 +309,9 @@ module.exports = function (passport) {
           }
         });
       }
-      res.redirect('/userManagement/' + BagdeID);
+      req.flash('success', 'The user has been successfully promoted to Manager status');
+      req.flash('fade_out', '3000');
+      res.redirect('/userManagement/' + badgeID);
 
     });
 
@@ -325,14 +322,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
+    var badgeID = req.params.badge;
 
-    dbAPI.validateUser(BagdeID).then(function (ret) {
+    dbAPI.validateUser(badgeID).then(function (ret) {
       console.log(ret.dataValues);
       console.log("USER STATUS " + ret.status);
 
       if (ret.status == "Manager" && ret.status != "Admin") {
-        dbAPI.modifyUser(BagdeID, { status: "User" }).then(function (result) {
+        dbAPI.modifyUser(badgeID, { status: "User" }).then(function (result) {
           if (result == undefined) {
             console.log("Error");
           }
@@ -341,7 +338,9 @@ module.exports = function (passport) {
           }
         });
       }
-      res.redirect('/userManagement/' + BagdeID);
+      req.flash('success', 'The Manager has been successfully demoted to User status');
+      req.flash('fade_out', '3000');
+      res.redirect('/userManagement/' + badgeID);
 
     });
 
@@ -351,24 +350,24 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var BagdeID = req.params.badge;
+    var badgeID = req.params.badge;
 
-    dbAPI.validateUser(BagdeID).then(function (ret) {
+    dbAPI.validateUser(badgeID).then(function (ret) {
 
       if (ret.loggedIn === true) {
-        dbAPI.modifyUser(BagdeID, { loggedIn: false }).then(function (result) {
+        dbAPI.modifyUser(badgeID, { loggedIn: false }).then(function (result) {
           if (result == undefined) {
             console.log("Error");
           }
           else {
             console.log("user Badged out successfully");
-            
+
           }
         });
       }
-      req.flash('success', 'This user badged out the lab successfully');
+      req.flash('success', 'The user has been successfully badged out of the lab');
       req.flash('fade_out', '3000');
-      res.redirect('/userManagement/' + BagdeID);
+      res.redirect('/userManagement/' + badgeID);
 
     });
 
