@@ -16,18 +16,6 @@
 </div>
 <br />
 
-{% if not messages.statusSelector or (messages.statusSelector and messages.statusSelector === "") %}
-  {% set status = "NO STATUS" %}
-{% else %}
-  {% set status = messages.statusSelector %}
-{% endif %}
-
-{% if not messages.stationSelector or (messages.stationSelector and messages.stationSelector === "") %}
-  {% set station = "NO STATION" %}
-{% else %}
-  {% set station = messages.stationSelector %}
-{% endif %}
-
 <div class="container-fluid" style="border:0.75px solid #cecece;">
     <div class="row">
       <div class="panel panel-default pl-2 pb-2">
@@ -35,24 +23,24 @@
       </div>
     </div>
 
-  <form method="POST" class="searchUserForm">
+  <form method="POST" action="/userManagement" id="searchForm" class="searchUserForm">
     <div class="form-group row">
       <label for="name" class="col-1 col-form-label font-weight-bold text-right">Name:</label>
       <div class="col-3">
-        <input id="name" name="nameInput" type="searchBox" value="{{ messages.nameInput }}" placeholder="Enter user name"/>
+        <input id="name" name="nameInput" type="searchBox" placeholder="Enter user name"/>
       </div>
       <label for="dateRange" class="col-2 col-form-label font-weight-bold text-right">Registered date:</label>
       <div class="col-3">
-        <input id="dateRange" name="dateFilter" type="searchBox" value="{{ messages.dateFilter }}" placeholder="Select date range" style="background: #eee; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%"/>
+        <input id="dateRange" name="dateFilter" type="searchBox" placeholder="Select date range" style="background: #eee; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%"/>
       </div>
       <label class="col-1 col-form-label font-weight-bold text-right" for="statusSelector">Status:</label>
       <div class="col-2">
         <select class="custom-select" id="statusSelector" name="statusSelector" type="searchBox">
-          <option value="" disabled {% if status == "NO STATUS" %}selected{% endif %}>Choose status</option>
-          <option value="All" {% if status == "All" %}selected{% endif %}>All</option>
-          <option value="User" {% if status == "User" %}selected{% endif %}>User</option>
-          <option value="Manager" {% if status == "Manager" %}selected{% endif %}>Manager</option>
-          <option value="Admin" {%if status == "Admin" %}selected{% endif %}>Admin</option>
+          <option value="" disabled selected>Choose status</option>
+          <option value="All">All</option>
+          <option value="User">User</option>
+          <option value="Manager">Manager</option>
+          <option value="Admin">Admin</option>
         </select>
       </div>
     </div>
@@ -60,16 +48,16 @@
     <div class="form-group row">
       <label for="badge" class="col-1 col-form-label font-weight-bold text-right">Badge:</label>
       <div class="col-3">
-        <input id="badge" name="badgeInput" type="searchBox" value="{{ messages.badgeInput }}" placeholder="Enter badge number"/>
+        <input id="badge" name="badgeInput" type="searchBox" placeholder="Enter badge number"/>
       </div>
       <label class="col-2 col-form-label font-weight-bold text-right" for="stationSelector">Station:</label>
       <div class="col-3">
         <select class="custom-select" id="stationSelector" name="stationSelector" type="searchBox">
-          <option value="" disabled {% if station == "NO STATION" %}selected{% endif %}>Choose station</option>
-          <option value="All" {% if station == "All" %}selected{% endif %}>All stations</option>
+          <option disabled selected>Choose station</option>
+          <option value="All">All stations</option>
           {% for item in stations %}
             {% set sId = item.sId %}
-            <option value="{{sId}}" {% if station == sId %}selected{% endif %}>{{ item.name }}</option>
+            <option value="{{sId}}">{{ item.name }}</option>
           {% endfor %}
         </select>
       </div>
@@ -77,7 +65,7 @@
       </div>
       <div class="col-2">
         <div class="btn-group" role="group" aria-label="button-group">
-          <button type="submit" class="btn btn-primary">Search</button>
+          <button type="submit" id="search" name="search" class="btn btn-primary">Search</button>
           <a href="/userManagement" class="btn btn-secondary" role="button">Clear</a>
         </div>
       </div>
@@ -101,7 +89,7 @@
       {% for item in users %}
         <tr>
           <td>{{item.first}} {{item.last}}</td>
-          <td><name="badgeNumber">{{item.badge}}</td>
+          <td>{{item.badge}}</td>
           <td>{{item.confirmation}}</td>
           <td><button class="btn btn-primary" onclick="fwd(this)" data-badge={{item.badge}} >Edit details</button></td>
         </tr>
@@ -110,43 +98,24 @@
   </table>
 </div>
 
+
 <script type="text/javascript">
 
   function fwd(obj) {
-    var badge  = obj.getAttribute("data-badge")
-    window.location.href = ("/userManagement/" + badge), true
+    var badge = obj.getAttribute("data-badge");
+    
+    $("#name").val("");
+    $("#dateRange").val("");
+    $("#stationSelector").val($("stationSelector option:eq(0)").val());
+    $("#statusSelector").val($("statusSelector option:eq(0)").val());
+    $("#badge").val("");
+    window.location.href = ("/userManagement/" + badge), true;
   };
-
-  $(function() {
-
-    $('input[name="dateFilter"]').daterangepicker ({
-      autoUpdateInput: false,
-      locale: {
-        cancelLabel: 'Clear'
-      },
-      ranges: {
-        'Today': [moment(), moment()],
-        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-        'This Month': [moment().startOf('month'), moment().endOf('month')]
-      }
-    });
-
-    $('input[name="dateFilter"]').on('apply.daterangepicker', function(ev, picker) {
-      $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
-    });
-
-    $('input[name="dateFilter"]').on('hide.daterangepicker', function (ev, picker) {
-      $('input[name="dateFilter"]').val('');
-    });
-
-    $('input[name="dateFilter"]').on('cancel.daterangepicker', function(ev, picker) {
-      $(this).val('');
-    });
-  });
 
 </script>
 
+{% endblock %}
 
+{% block custom_scripts %}
+  <script src="/javascripts/userManagement.js"></script>
 {% endblock %}
