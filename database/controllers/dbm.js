@@ -458,7 +458,8 @@ module.exports = {
       //Transaction incomplete -
       //Error occurred when adding data to the
       //Event table.
-      return module.exports.errorHandling(error, returnStatus);
+      console.log(err);
+      return module.exports.errorHandling(err, returnStatus);
     });
   },
 
