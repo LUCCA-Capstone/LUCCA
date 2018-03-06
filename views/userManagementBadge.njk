@@ -22,13 +22,13 @@
                 <tr>
                     <th>First name</th>
                     <td>
-                        <input type="text" name="first" class="form-control" id="firstName" value="{{user.first}}" data-initail="{{user.first}}">
+                        <input type="text" name="first" class="form-control" id="firstName" value="{{user.first}}" data-initial="{{user.first}}">
                     </td>
                 </tr>
                 <tr>
                     <th>Last name</th>
                     <td>
-                        <input type="text" name="last" class="form-control" id="lastName" value="{{user.last}}" data-initail="{{user.last}}">
+                        <input type="text" name="last" class="form-control" id="lastName" value="{{user.last}}" data-initial="{{user.last}}">
                     </td>
                 </tr>
                 <tr>
@@ -38,13 +38,13 @@
                 <tr>
                     <th>Email</th>
                     <td>
-                        <input type="email" name="email" class="form-control" id="userEmail" value="{{user.email}}" data-initail="{{user.email}}">
+                        <input type="email" name="email" class="form-control" id="userEmail" value="{{user.email}}" data-initial="{{user.email}}">
                     </td>
                 </tr>
                 <tr>
                     <th>Phone</th>
                     <td>
-                        <input type="phone" name="phone" class="form-control" id="userPhone" value="{{user.phone}}" data-initail="{{user.phone}}">
+                        <input type="phone" name="phone" class="form-control" id="userPhone" value="{{user.phone}}" data-initial="{{user.phone}}">
                     </td>
                 </tr>
                 <tr>
@@ -58,24 +58,30 @@
                 <tr>
                     <th>Emergency contact name</th>
                     <td>
-                        <input type="text" name="ecName" class="form-control" id="ecName" value="{{user.ecName}}" data-initail="{{user.ecName}}">
+                        <input type="text" name="ecName" class="form-control" id="ecName" value="{{user.ecName}}" data-initial="{{user.ecName}}">
                     </td>
                 </tr>
                 <tr>
                     <th>Emergency relationship</th>
                     <td>
-                        <input type="text" name="ecRel" class="form-control" id="ecRel" value="{{user.ecRel}}" data-initail="{{user.ecRel}}">
+                        <input type="text" name="ecRel" class="form-control" id="ecRel" value="{{user.ecRel}}" data-initial="{{user.ecRel}}">
                     </td>
                 </tr>
                 <tr>
                     <th>Emergency phone number</th>
                     <td>
-                        <input type="text" name="ecPhone" class="form-control" id="ecPhone" value="{{user.ecPhone}}" data-initail="{{user.ecPhone}}">
+                        <input type="text" name="ecPhone" class="form-control" id="ecPhone" value="{{user.ecPhone}}" data-initial="{{user.ecPhone}}">
                     </td>
                 </tr>
                 <tr>
                     <th>Status</th>
                     <td>{{user.status}}</td>
+                </tr>
+                <tr>
+                    <th>Mailing List</th>
+                    <td>
+                        <input type="checkbox" name="mailingList" id="mailingList"  {% if user.mailingList == true %} data-initial="true" checked {% endif %} />
+                    </td>                    
                 </tr>
                 <tr>
                     <th>Last seen: </th>
