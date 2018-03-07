@@ -196,7 +196,7 @@ router.post('/user-access', function(req, res, next) {
       let user = res.locals.obj.badge;
       let userInCache = res.locals.obj.userInCache['badge'];
       let station = res.locals.obj.station;
-      db.logEvent('Granted permission to log into station',station + ' by ' + user + ' for ' + userInCache).then(function(){
+      db.logEvent('privilege', userInCache, 'Granted training on station with id ' + station + ' (by ' + user + ')').then(function(){
         cache.delete(req.headers['station-id']);
         stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
         res.set({
@@ -241,7 +241,7 @@ router.post('/user-access', function(req, res, next) {
       stationLog.addUser(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('log on station',station + ' by user ' + user).then(function(){
+      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (station activated by user)').then(function(){
       });
       res.set({
         'Content-Type': 'text/plain',
@@ -269,7 +269,7 @@ router.post('/user-access', function(req, res, next) {
       });
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('log off station',station + ' by user ' + user).then(function(){
+      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (user done with station)').then(function(){
       });
       return res.sendStatus(200);
     } else {
@@ -355,7 +355,7 @@ router.post('/local-reset', function(req, res){
       if(results){
         if(results['registered'] && cert.subject.CN === results['certCN']){
           if(stationLog.updateMachine(sid, 'disabled')){
-           db.logEvent('user traffic', undefined, 'Station: ' + sid + ' reset button activated').then(function(){
+           db.logEvent('user traffic', undefined, 'Station with ID ' + sid + ' deactivated (reset button pressed)').then(function(){
              res.sendStatus(200);
            });
           }else{

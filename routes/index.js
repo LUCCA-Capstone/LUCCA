@@ -571,14 +571,14 @@ function postBadgeIn(req, res, next) {
       if (BadgeInFlag === false) {
         req.flash('success', 'You successfully badged into the lab!');
         req.flash('fade_out', '3000');
-        dbAPI.logEvent("EPL Badge IN", badgeNumber);
+        dbAPI.logEvent("user traffic", badgeNumber, 'User clocked in to lab');
         dbAPI.modifyUser(badgeNumber, { loggedIn: true });
         res.redirect('/badgein');
       }
       else if (BadgeInFlag === true) {
         req.flash('success', 'You successfully badged out the lab!');
         req.flash('fade_out', '3000');
-        dbAPI.logEvent("EPL Badge OUT", badgeNumber);
+        dbAPI.logEvent("user traffic", badgeNumber, 'User clocked out of lab');
         dbAPI.modifyUser(badgeNumber, { loggedIn: false });
         res.redirect('/badgein');
       }
