@@ -318,7 +318,7 @@ describe('DB TEST', function () {
 
   describe('logEvent create generic event', function(){
     it('Should create a new event and return true', function(done){
-      controllers.logEvent('generic_event', "This is a simple event that occurred").done(function(results){
+      controllers.logEvent('test_event', 'test_event_1', "This is a simple event that occurred").done(function(results){
         expect(results.result).to.equal(true);
         done();
       });
@@ -327,7 +327,7 @@ describe('DB TEST', function () {
 
   describe('logEvent create generic event with timestamp for now', function(){
     it('Should create a new event and return true', function(done){
-     controllers.logEvent('generic_event', "This is a simple event with an explicit timestamp that's now", new Date()).done(function(results){
+     controllers.logEvent('test_event', 'test_event_2', "This is a simple event with an explicit timestamp that's now", new Date()).done(function(results){
        expect(results.result).to.equal(true);
        done();
      });
@@ -336,7 +336,7 @@ describe('DB TEST', function () {
 
   describe('logEvent create generic event with old timestamp', function(){
     it('Should create a new event and return true', function(done){
-      controllers.logEvent('generic_event', "This is a simple event with an explicit timestamp from long ago", new Date('12-13-1998')).done(function(results){
+      controllers.logEvent('test_event', 'test_event_3', "This is a simple event with an explicit timestamp from long ago", new Date('12-13-1998')).done(function(results){
         expect(results.result).to.equal(true);
         done();
       });
@@ -345,7 +345,7 @@ describe('DB TEST', function () {
 
   describe('logEvent create an event with a different event class', function(){
     it('Should create a new event and return true', function(done){
-      controllers.logEvent('different_event', "This is a simple event that occurred and is filed under a different event class").done(function(results){
+      controllers.logEvent('also_test_event', 'test_event_4', "This is a simple event that occurred and is filed under a different event class").done(function(results){
         expect(results.result).to.equal(true);
         done();
       });
@@ -364,8 +364,8 @@ describe('DB TEST', function () {
       });
     });
 
-    it('Get all logged events with class generic_event (should return a list containing at least three events)', function(done){
-      controllers.getEvents('generic_event').done(function(results){
+    it('Get all logged events with class test_event (should return a list containing at least three events)', function(done){
+      controllers.getEvents('test_event').done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
@@ -373,8 +373,8 @@ describe('DB TEST', function () {
         done();
       });
     });
-    it('Get all events logged with an event_class of different_event (should return a list containing one event)', function(done){
-      controllers.getEvents('different_event').done(function(results){
+    it('Get all events logged with an event_class of also_test_event (should return a list containing one event)', function(done){
+      controllers.getEvents('also_test_event').done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('different_event');
@@ -389,7 +389,7 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged after 2005 (should return a list containing one event)', function(done){
-      controllers.getEvents(undefined, from=new Date('1-1-2005')).done(function(results){
+      controllers.getEvents(undefined, undefined, from=new Date('1-1-2005')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.above(from);
@@ -398,7 +398,7 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged before 2005 (should return a list containing three events)', function(done){
-      controllers.getEvents(undefined, undefined, to=new Date('1-1-2005')).done(function(results){
+      controllers.getEvents(undefined, undefined,  undefined, to=new Date('1-1-2005')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.not.above(to);
@@ -407,13 +407,13 @@ describe('DB TEST', function () {
       });
     });
     it('Get all events logged after 2050 (should return a list containing zero events)', function(done){
-      controllers.getEvents(undefined, from=new Date('1-1-2050')).done(function(results){
+      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2050')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf(0);
         done();
       });
     });
     it('Get all events logged after 2005 but before 2050 (should return a list containing three events)', function(done){
-      controllers.getEvents(undefined, from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
+      controllers.getEvents(undefined, undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventDate).to.be.a('date').that.is.above(from).and.not.above(to);
@@ -421,8 +421,8 @@ describe('DB TEST', function () {
         done();
       });
     });
-    it('Get all events logged after 2005 but before 2050 with event class generic_event (should return a list containing two events)', function(done){
-      controllers.getEvents('generic_event', from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
+    it('Get all events logged after 2005 but before 2050 with event class test_event (should return a list containing two events)', function(done){
+      controllers.getEvents('test_event', undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(1);
         for (var i = 0; i < results.length; i++){
           expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
