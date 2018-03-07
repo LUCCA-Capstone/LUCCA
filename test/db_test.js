@@ -368,7 +368,7 @@ describe('DB TEST', function () {
       controllers.getEvents('test_event').done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(2);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
+          expect(results[i].eventClass).to.be.a('string').that.equals('test_event');
         }
         done();
       });
@@ -377,7 +377,7 @@ describe('DB TEST', function () {
       controllers.getEvents('also_test_event').done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(0);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].eventClass).to.be.a('string').that.equals('different_event');
+          expect(results[i].eventClass).to.be.a('string').that.equals('also_test_event');
         }
         done();
       });
@@ -425,7 +425,7 @@ describe('DB TEST', function () {
       controllers.getEvents('test_event', undefined,  from=new Date('1-1-2005'), to=new Date('1-1-2050')).done(function(results){
         expect(results).to.be.an('array').that.has.lengthOf.above(1);
         for (var i = 0; i < results.length; i++){
-          expect(results[i].eventClass).to.be.a('string').that.equals('generic_event');
+          expect(results[i].eventClass).to.be.a('string').that.equals('test_event');
           expect(results[i].eventDate).to.be.a('date').that.is.above(from).and.not.above(to);
         }
         done();
