@@ -51,6 +51,7 @@
           <th scope="col">Name</th>
           <th scope="col">Description</th>
           <th scope="col">Online</th>
+          <th scope="col" nowrap="nowrap">Being used by</th>
           <th scope="col">Created</th>
           <th scope="col">Updated</th>
           <th scope="col">Edit station</th>
@@ -89,6 +90,7 @@
                 </div>
               </td>
             {% endif %}
+            <td>{{item.usedBy}}</td>
 
             <td>{{item.createdAt}}</td>
             <td>{{item.updatedAt}}</td>
