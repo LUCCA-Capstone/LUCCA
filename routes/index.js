@@ -10,6 +10,7 @@ var express = require('express');
 var router = express.Router();
 var path = require('path');
 var dbAPI = require('../database/controllers/dbm.js');
+var userStationAPI = require('../lib/station-log.js');
 var bodyParser = require('body-parser');
 var jsonParser = bodyParser.json();
 const { check, validationResult } = require('express-validator/check');
@@ -622,24 +623,49 @@ function getStnMngmnt(req, res) {
   //set filter based on query parameter passed in
   var data = { authenticated: true }
   var filter = req.params.filter;
-
   filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
 
-  //get results from database that match filter
-  dbAPI.getStations(filter).then(function (ret) {
-    if (ret !== false && ret !== undefined) {
-      ret.sort(function (a, b) {
-        return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
-      });
-      //display sorted array of stations, unregistered stations first
-      data.obj = ret;
-    } else {
-      //display error to user if no database
-      data.obj = ret;
-      req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
-    }
-    res.render('stationManagement.njk', data);
-  });
+  Promise.all([
+    dbAPI.getStations(filter),
+    userStationAPI.getAll()
+  ])
+    .then(
+      ([ret, userStationRel]) => {
+        if (ret !== false && ret !== undefined) {
+          ret.sort(function (a, b) {
+            return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
+          });
+          //display sorted array of stations, unregistered stations first
+          data.obj = ret;
+        } else {
+          //display error to user if no database
+          data.obj = ret;
+          req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
+        }
+        var flag = false;
+        for(var i = 0; i < data.obj.length; ++i){
+          for (var key in userStationRel) {
+            if(data.obj[i].sId == key){
+              data.obj[i].usedBy = userStationRel[key].user;
+              flag = true;
+            }
+          }
+          if(!flag){
+            data.obj[i].usedBy = "";
+          }
+          flag = false;
+        }
+        // console.log(data.obj);
+        // console.log(userStationRel);
+        res.render('stationManagement.njk', data);
+      }
+    )
+    .catch(
+      err => {
+        console.warn("something went wrong:", err);
+        res.status(500).send(err);
+      }
+    );
 }
 
 
