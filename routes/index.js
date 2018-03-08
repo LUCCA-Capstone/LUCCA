@@ -187,28 +187,28 @@ module.exports = function (passport) {
       return res.sendStatus(400);
     }
 
-      Promise.all([
-        dbAPI.getUsers(undefined),
-        dbAPI.getStations()
+    Promise.all([
+      dbAPI.getUsers(undefined),
+      dbAPI.getStations()
 
-      ])
-        .then(
-          ([allUsers, allStations]) => {
-            var data = {
-              users: allUsers,
-              stations: allStations,
-              authenticated: true
-            }
+    ])
+      .then(
+        ([allUsers, allStations]) => {
+          var data = {
+            users: allUsers,
+            stations: allStations,
+            authenticated: true
+          }
 
-            res.render('userManagement.njk', data);
-          }
-        )
-        .catch(
-          err => {
-            console.warn("something went wrong:", err);
-            res.status(500).send(err);
-          }
-        );
+          res.render('userManagement.njk', data);
+        }
+      )
+      .catch(
+        err => {
+          console.warn("something went wrong:", err);
+          res.status(500).send(err);
+        }
+      );
   });
 
   router.post('/userManagement', checkAuth, jsonParser, function (req, res) {
@@ -225,7 +225,7 @@ module.exports = function (passport) {
       endDate = new Date(endRange);
       endDate.setDate(endDate.getDate() + 1);
     }
-    
+
     Promise.all([
       dbAPI.getUsers(startDate, endDate),
       dbAPI.getPrivilegedStationUsers(req.body.stationSelector),
@@ -246,17 +246,17 @@ module.exports = function (passport) {
           *however; cannot return match prematurely as later filter may weed it out.*/
           var stationMatchesArray = new Array();
           var badgeFilter = req.body.badgeInput
-                              ? usersByDate.filter( x => 
-                                  x.badge.indexOf(req.body.badgeInput) > -1)
-                              : usersByDate;
+            ? usersByDate.filter(x =>
+              x.badge.indexOf(req.body.badgeInput) > -1)
+            : usersByDate;
           var nameFilter = req.body.nameInput
-                              ? badgeFilter.filter( x => 
-                                  (x.first + " " + x.last)
-                                    .toUpperCase()
-                                    .indexOf(req.body.nameInput.toUpperCase()) > -1)
-                              : badgeFilter;
+            ? badgeFilter.filter(x =>
+              (x.first + " " + x.last)
+                .toUpperCase()
+                .indexOf(req.body.nameInput.toUpperCase()) > -1)
+            : badgeFilter;
           var statusFilter = undefined; //specified below; too complex for ternery operator
-          
+
           var data = {
             stations: allStations,
             authenticated: true
@@ -268,7 +268,7 @@ module.exports = function (passport) {
             statusFilter = nameFilter;
           } else {
             //User specified a particular status by which we should search
-            statusFilter = nameFilter.filter( x => x.status === req.body.statusSelector);
+            statusFilter = nameFilter.filter(x => x.status === req.body.statusSelector);
           }
 
 
@@ -277,8 +277,8 @@ module.exports = function (passport) {
             data.users = statusFilter;
           } else {
             //If user specified a particular station, iterate over getPrivilegedStationUsers results
-            privUsers.forEach( function (privElement) {
-              statusFilter.forEach( function (statusElement) {
+            privUsers.forEach(function (privElement) {
+              statusFilter.forEach(function (statusElement) {
                 if (privElement.badge == statusElement.badge) {
                   stationMatchesArray.push(privElement);
                 }
@@ -291,7 +291,7 @@ module.exports = function (passport) {
           res.send(data);
         }
       )
-      
+
       .catch(
         err => {
           req.flash('error', err.details);
@@ -316,6 +316,12 @@ module.exports = function (passport) {
       return res.sendStatus(400);
     }
     var DeletedBadge = req.params.badge;
+    if(DeletedBadge===req.user.badge)
+    {
+      req.flash('error', 'Not allowed to delete yourself as an Admin');      
+      res.redirect('/userManagement/' + DeletedBadge);
+      return; 
+    }
     dbAPI.deleteUser(DeletedBadge).then(function (result) {
       console.log("user is deleted successfully");
     });
@@ -427,6 +433,42 @@ module.exports = function (passport) {
     });
 
   });
+
+
+  router.post('/userManagement/demoteAdmin/:badge', checkAuth, function (req, res) {
+    if (!req.body) {
+      return res.sendStatus(400);
+    }
+    let badgeID = req.params.badge;
+    if(badgeID===req.user.badge)
+    {
+      req.flash('error', 'Not allowed to demote yourself from being an Admin');      
+      res.redirect('/userManagement/' + badgeID);
+      return; 
+    }
+    dbAPI.validateUser(badgeID).then(function (ret) {
+
+      if (ret.status == "Admin") {
+        dbAPI.modifyUser(badgeID, { status: "Manager", password: null }).then(function (result) {
+          if (result == undefined) {
+            console.log("Error could not demote admin");
+          }
+          else {
+            let adminName = req.user.first + ' ' + req.user.last;
+            let adminEmail = req.user.email;
+            let adminBadge = req.user.badge;
+            dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has demoted user with badge ID: ${badgeID} to Manager status`);
+            dbAPI.logEvent('privilege', badgeID, `User with badge ID: ${badgeID} has been demoted to Manager status`);
+          }
+        });
+
+      }
+      req.flash('success', 'The Admin has been successfully demoted to Manager status');
+      req.flash('fade_out', '3000');
+      res.redirect('/userManagement/' + badgeID);
+    });
+  });
+
 
   router.post('/userManagement/badgeOutUser/:badge', checkAuth, function (req, res) {
     if (!req.body) {

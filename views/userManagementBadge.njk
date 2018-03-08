@@ -105,9 +105,14 @@
                             </form>
                         {% elif user.status == "Manager" %}
                             <br>
-                            <form id="ChangeStatusToManager" action="/userManagement/demoteManager/{{user.badge}}" method="post">
+                            <form id="ChangeStatusToUser" action="/userManagement/demoteManager/{{user.badge}}" method="post">
                             <button type='submit' class="btn btn-primary" name='submit' value="">Demote to User</button>
                             </form>
+                        {% elif user.status == "Admin" %}
+                            <br>
+                            <form id="ChangeAdminStatusToManager" action="/userManagement/demoteAdmin/{{user.badge}}" method="post">
+                            <button type='submit' class="btn btn-primary" name='submit' value="">Demote to Manager</button>
+                            </form>    
                         {% endif %}  
                             <br>
                             <button class="btn btn-primary" name='updateUser' id="updateUser">Save/Update User Information</button>
