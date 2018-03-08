@@ -38,14 +38,14 @@ router.post('/user-access', function(req, res, next) {
       return res.sendStatus(403);
     } 
     else if (!station.registered) {
-      db.logEvent('station', undefined, "Received a user-access action from an unregistered station advertising station-id " + headerObj['station-id'] ).catch(err=> {;
+      db.logEvent('station', undefined, "An unrecognized station sent a user check-in/check-out request for a user with ID '" + bodyObj + "'. The station declared the following station-id: '" + headerObj['station-id'] + "'").catch(err=> {;
         console.error(err);
       });
       //console.log('Received a user-access action from an offline station with station-id: ' + headerObj['station-id']);
       return res.sendStatus(403); 
     }
     else if (station.certCN !== cert.subject.CN) {
-      db.logEvent('station', headerObj['station-id'], "Received a user-access action with a mismatched cert CN for station-id: (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").catch(err => {
+      db.logEvent('station', headerObj['station-id'], "Received a check-in/check-out request from a user, but the station certificate CN did not match the one on record (expected '" + station.certCN + "', received '" + cert.subject.CN + "'). Either the station certificate has changed and needs to be updated in the admin interface, or some other agent is trying to pose as this station.").catch(err => {
         console.error(err);
       });
       //console.log('Received a user-access action with a mismatched cert CN for station-id: ' + headerObj['station-id']);
@@ -264,7 +264,7 @@ router.post('/user-access', function(req, res, next) {
       stationLog.addUser(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (station activated by user)').catch(err => {
+      db.logEvent('user traffic', user, 'User checked out station ' + station).catch(err => {
         console.error(err);
       });
       res.set({
@@ -294,7 +294,7 @@ router.post('/user-access', function(req, res, next) {
       });
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (user done with station)').catch(err => {
+      db.logEvent('user traffic', user, 'User checked in station ' + station).catch(err => {
         console.error(err);
       });
       return res.sendStatus(200);
@@ -319,7 +319,7 @@ router.post('/station-heartbeat', function(req, res) {
         if (!station.registered) {
           if (station.certCN != cert.subject.CN) { // existing unregistered station with mismatched cert name
             db.modifyStation(stationId, {certCN: cert.subject.CN}).then(function(response) {
-              db.logEvent('station', stationId, "Heartbeat for unregistered station with ID '" + stationId + "' provided a new station CN. Changing to '" + cert.subject.CN + "'").catch(err => {
+              db.logEvent('station', stationId, "Heartbeat received from unregistered station '" + stationId + "' provided a new station CN. Changing to '" + cert.subject.CN + "'").catch(err => {
                 console.error(err);
               });
             }).catch(err => {
@@ -329,7 +329,7 @@ router.post('/station-heartbeat', function(req, res) {
           res.status(403).send('Forbidden');
         } else { // heartbeat is from an existing registered station
           if (station.certCN != cert.subject.CN) { // existing registered cert with mismatched cert
-            db.logEvent('station', stationId, "Heartbeat for station with ID '" + stationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").catch(err => {
+            db.logEvent('station', stationId, "Heartbeat received from station '" + stationId + "', but the station certificate CN did not match the one on record (expected '" + station.certCN + "', received '" + cert.subject.CN + "'). Either the station certificate has changed and needs to be updated in the admin interface, or some other agent is trying to pose as this station.").catch(err => {
               console.error(err);
             });
             res.sendStatus(403);
@@ -387,7 +387,7 @@ router.post('/local-reset', function(req, res){
       if(results){
         if(results['registered'] && cert.subject.CN === results['certCN']){
           if(stationLog.updateMachine(sid, 'disabled')){
-           db.logEvent('user traffic', undefined, 'Station with ID ' + sid + ' deactivated (reset button pressed)').catch(err => {
+           db.logEvent('user traffic', undefined, 'Station ' + sid + ' checked in by reset button').catch(err => {
              console.error(err);
            });
            res.sendStatus(200);
@@ -397,14 +397,16 @@ router.post('/local-reset', function(req, res){
             });
             res.sendStatus(500);
           }
-        }else{
-          db.logEvent('station', sid, 'local-reset API action received from an invalid source; station is either offline, or offered a certificate with a mismatched Canonical Name').catch(err => {
+        }else if(results['registered']){
+          db.logEvent('station', sid, "Station reported that it was checked in by reset button, but the station TLS certificate CN did not match the one on record (expected '" + results['certCN'] + "', received '" + cert.subject.CN + "'). Either the station certificate has changed and needs to be updated in the admin interface, or some other agent is trying to pose as this station.").catch(err => {
             console.error(err);
           });
           res.sendStatus(403);
+        }else{
+          res.sendStatus(403);
         }
       }else{
-        db.logEvent('station', undefined, 'local-reset API action received from an unknown station ID: ' + sid).catch(err => {
+        db.logEvent('station', undefined, "An unrecognized station reported that it was checked in by reset button. Reported stationID was '" + sid + "'").catch(err => {
           console.error(err);
         });
         res.sendStatus(403);
@@ -435,7 +437,7 @@ router.get('/last-state', function(req, res){
     db.getStation(sid).then(results => {
       if(results){
         if(results['registered'] && cert.subject.CN === results['certCN']){
-          db.logEvent('station', sid, 'Received a last-state request, responding with station state found in cache').catch(err => {
+          db.logEvent('station', sid, "Station requested its last known activation state from the controller cache").catch(err => {
             console.error(err);
           });
           //Store station object
@@ -472,19 +474,19 @@ router.get('/last-state', function(req, res){
             }
           }
         }else{
-          db.logEvent('station', undefined, 'Received last-state request with a bad certificate CN').catch(err => {
+          db.logEvent('station', sid, "Station requested its last known activation state from the controller cache, but the station TLS certificate CN did not match the one on record (expected '" + results['certCN'] + "', received '" + cert.subject.CN + "'). Either the station certificate has changed and needs to be updated in the admin interface, or some other agent is trying to pose as this station.").catch(err => {
             console.error(err);
           });
           res.sendStatus(403);
         }
       }else{
-        db.logEvent('station', undefined, 'Received last-state request from an unknown station').catch(err => {
+        db.logEvent('station', undefined, "An unrecognized station requested its last known activation state from the controller cache. Reported stationID was '" + sid + "'").catch(err => {
           console.error(err);
         });
         res.sendStatus(403);
       }
     }).catch(err => {
-      console.log('Caught an error while attempting to retrieve station info from database:\n' + err);
+      console.log(err);
       res.sendStatus(500);
     });
   }else{
