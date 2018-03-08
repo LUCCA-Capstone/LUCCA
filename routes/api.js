@@ -23,15 +23,6 @@ router.post('/user-access', function(req, res, next) {
   var headerObj = req.headers;
   var bodyObj = req.body;
   var cert = req.socket.getPeerCertificate();
-  // Until a better solution is found this is used for chai testing
-  // FIXME: This is a nasty hack that needs to be fixed before shipping
-  if (Object.keys(cert).length === 0) {
-    cert = {
-      'subject': {
-        'CN' : 'localhost:3001'
-      }
-    }
-  };
   db.getStation(headerObj['station-id']).then(function(station) {
     if(!station) {
       //console.log('Received a user-access action from an unknown station-id: ' + headerObj['station-id']);
