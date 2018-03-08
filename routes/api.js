@@ -39,14 +39,14 @@ router.post('/user-access', function(req, res, next) {
     } 
     else if (!station.registered) {
       db.logEvent('station', undefined, "Received a user-access action from an unregistered station advertising station-id " + headerObj['station-id'] ).catch(err=> {;
-        console.log(err);
+        console.error(err);
       });
       //console.log('Received a user-access action from an offline station with station-id: ' + headerObj['station-id']);
       return res.sendStatus(403); 
     }
     else if (station.certCN !== cert.subject.CN) {
       db.logEvent('station', headerObj['station-id'], "Received a user-access action with a mismatched cert CN for station-id: (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").catch(err => {
-        console.log(err);
+        console.error(err);
       });
       //console.log('Received a user-access action with a mismatched cert CN for station-id: ' + headerObj['station-id']);
       return res.sendStatus(403);
@@ -112,9 +112,9 @@ router.post('/user-access', function(req, res, next) {
                 return res.sendStatus(403);
               };
             };
-          }).catch((error) => {
-            console.log(error);
-            return res.sendStatus(500, error);
+          }).catch((err) => {
+            console.error(err);
+            return res.sendStatus(500);
           });
         } else if (userWaiting === null && headerObj['station-state'] === 'Disabled') {
           db.getPrivileges(bodyObj).then(function(privs) {
@@ -137,9 +137,9 @@ router.post('/user-access', function(req, res, next) {
                 next();
               } 
             }
-          }).catch((error) => {
-            console.log(error);
-            return res.sendStatus(500, error);
+          }).catch((err) => {
+            console.error(err);
+            return res.sendStatus(500);
           });
         } else {
           res.locals.obj.destination = 'log';
@@ -173,21 +173,21 @@ router.post('/user-access', function(req, res, next) {
               next();
             };  
           };
-        }).catch((error) => {
-          console.log(error);
-          return res.sendStatus(500, error);
+        }).catch((err) => {
+          console.error(err);
+          return res.sendStatus(500);
         });
       } else {
         //console.log('Received a user-access action from station-id ' + headerObj['station-id'] + ' for a user without station privileges from user with badge: ' + bodyObj);
         return res.sendStatus(403);
       }
-    }).catch((error) => {
-          console.log(error);
-        return res.sendStatus(500, error);
+    }).catch((err) => {
+      console.error(err);
+      return res.sendStatus(500);
     });
-  }).catch((error) => {
-          console.log(error);
-      return res.sendStatus(500, error);
+  }).catch((err) => {
+    console.error(err);
+    return res.sendStatus(500);
   });
 });
 
@@ -212,7 +212,7 @@ router.post('/user-access', function(req, res, next) {
       let userInCache = res.locals.obj.userInCache['badge'];
       let station = res.locals.obj.station;
       db.logEvent('privilege', userInCache, 'Granted training on station with id ' + station + ' (by ' + user + ')').catch(err => {
-        console.log(err);
+        console.error(err);
       });
       cache.delete(req.headers['station-id']);
       stationLog.addUser(res.locals.obj.userInCache['user'], res.locals.obj.userInCache['badge'], req.headers['station-id']);
@@ -223,7 +223,7 @@ router.post('/user-access', function(req, res, next) {
       });
       return res.sendStatus(200);
     }).catch(err => {
-      console.log(err);
+      console.error(err);
       return res.sendStatus(500);
     });
   } 
@@ -264,7 +264,8 @@ router.post('/user-access', function(req, res, next) {
       stationLog.addUser(res.locals.obj.user, res.locals.obj.badge, req.headers['station-id']);
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (station activated by user)').then(function(){
+      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (station activated by user)').catch(err => {
+        console.error(err);
       });
       res.set({
         'Content-Type': 'text/plain',
@@ -293,7 +294,8 @@ router.post('/user-access', function(req, res, next) {
       });
       let user = res.locals.obj.badge;
       let station = res.locals.obj.station;
-      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (user done with station)').then(function(){
+      db.logEvent('user traffic', user, 'Accepted a user-access action on station with ID ' + station + ' (user done with station)').catch(err => {
+        console.error(err);
       });
       return res.sendStatus(200);
     } else {
@@ -317,15 +319,20 @@ router.post('/station-heartbeat', function(req, res) {
         if (!station.registered) {
           if (station.certCN != cert.subject.CN) { // existing unregistered station with mismatched cert name
             db.modifyStation(stationId, {certCN: cert.subject.CN}).then(function(response) {
-              db.logEvent('station', stationId, "Heartbeat for unregistered station with ID '" + stationId + "' provided a new station CN. Changing to '" + cert.subject.CN + "'");
+              db.logEvent('station', stationId, "Heartbeat for unregistered station with ID '" + stationId + "' provided a new station CN. Changing to '" + cert.subject.CN + "'").catch(err => {
+                console.error(err);
+              });
+            }).catch(err => {
+              console.error(err);
             });
           } // else nothing to change, the station simply isn't registered yet
           res.status(403).send('Forbidden');
         } else { // heartbeat is from an existing registered station
           if (station.certCN != cert.subject.CN) { // existing registered cert with mismatched cert
-            db.logEvent('station', stationId, "Heartbeat for station with ID '" + stationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").then(function(response) {
-              res.status(403).send('Forbidden');
+            db.logEvent('station', stationId, "Heartbeat for station with ID '" + stationId + "' had mismatched CN on client certificate (expected '" + station.certCN + "', received '" + cert.subject.CN + "')").catch(err => {
+              console.error(err);
             });
+            res.sendStatus(403);
           } else { // heartbeat is from existing registered station and cert matches
             res.set({
               'Content-Type': 'text/plain',
@@ -344,19 +351,19 @@ router.post('/station-heartbeat', function(req, res) {
         };
         db.createStation(newStation).then(function(result) {
           if(result) {
-            db.logEvent('station', stationId, "Unrecognized heartbeat created a new unregistered station with ID '" + stationId + "', certificate CN '" + cert.subject.CN + "'").then(function(logResult) {
-              res.set({
-                'Content-Type': 'text/plain',
-                'Date': new Date().toString()
-              });
-              res.sendStatus(403);
+            db.logEvent('station', stationId, "Unrecognized heartbeat created a new unregistered station with ID '" + stationId + "', certificate CN '" + cert.subject.CN + "'").catch(err => {
+              console.error(err);
             });
+            res.set({
+              'Content-Type': 'text/plain',
+              'Date': new Date().toString()
+            });
+            res.sendStatus(403);
           }
         });
       }
     }).catch(err => {
-      //Internal error in database
-      console.log(err);
+      console.error(err);
       res.sendStatus(500);
     });
   } else {
@@ -380,27 +387,30 @@ router.post('/local-reset', function(req, res){
       if(results){
         if(results['registered'] && cert.subject.CN === results['certCN']){
           if(stationLog.updateMachine(sid, 'disabled')){
-           db.logEvent('user traffic', undefined, 'Station with ID ' + sid + ' deactivated (reset button pressed)').then(function(){
-             res.sendStatus(200);
+           db.logEvent('user traffic', undefined, 'Station with ID ' + sid + ' deactivated (reset button pressed)').catch(err => {
+             console.error(err);
            });
+           res.sendStatus(200);
           }else{
-            db.logEvent('internal error', 'route handler for /api/local-reset', 'A cache lookup error occured while trying to process an API event, likely due to an empty or missing station-id header').then(function(){
-              res.sendStatus(500);
+            db.logEvent('internal error', 'route handler for /api/local-reset', 'A cache lookup error occured while trying to process an API event, likely due to an empty or missing station-id header').catch(err => {
+              console.error(err);
             });
+            res.sendStatus(500);
           }
         }else{
-          db.logEvent('station', sid, 'local-reset API action received from an invalid source; station is either offline, or offered a certificate with a mismatched Canonical Name').then(function() {
-            res.sendStatus(403);
+          db.logEvent('station', sid, 'local-reset API action received from an invalid source; station is either offline, or offered a certificate with a mismatched Canonical Name').catch(err => {
+            console.error(err);
           });
+          res.sendStatus(403);
         }
       }else{
         db.logEvent('station', undefined, 'local-reset API action received from an unknown station ID: ' + sid).catch(err => {
-          console.log(err);
+          console.error(err);
         });
         res.sendStatus(403);
       }
     }).catch(err => {
-        console.log(err);
+        console.error(err);
         res.sendStatus(500);
     });
   }else{
@@ -425,7 +435,9 @@ router.get('/last-state', function(req, res){
     db.getStation(sid).then(results => {
       if(results){
         if(results['registered'] && cert.subject.CN === results['certCN']){
-          db.logEvent('station', sid, 'Received a last-state request, responding with station state found in cache');
+          db.logEvent('station', sid, 'Received a last-state request, responding with station state found in cache').catch(err => {
+            console.error(err);
+          });
           //Store station object
           let obj = stationLog.getMachine(sid);
 
@@ -460,15 +472,16 @@ router.get('/last-state', function(req, res){
             }
           }
         }else{
-          db.logEvent('station', undefined, 'Received last-state request with a bad certificate CN').then(function(){
-            res.sendStatus(403);
+          db.logEvent('station', undefined, 'Received last-state request with a bad certificate CN').catch(err => {
+            console.error(err);
           });
+          res.sendStatus(403);
         }
       }else{
-        db.logEvent('station', undefined, 'Received last-state request from an unknown station').then(function(){
-          console.log('Empty Results');
-          res.sendStatus(403);
+        db.logEvent('station', undefined, 'Received last-state request from an unknown station').catch(err => {
+          console.error(err);
         });
+        res.sendStatus(403);
       }
     }).catch(err => {
       console.log('Caught an error while attempting to retrieve station info from database:\n' + err);
