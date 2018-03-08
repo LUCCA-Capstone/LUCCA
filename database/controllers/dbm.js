@@ -458,7 +458,7 @@ module.exports = {
       //Transaction incomplete -
       //Error occurred when adding data to the
       //Event table.
-      console.log(err);
+      console.error(err);
       return module.exports.errorHandling(err, returnStatus);
     });
   },
@@ -505,7 +505,7 @@ module.exports = {
     }).then(function (data) {
       return data;
     }).catch(err => {
-      console.log(JSON.stringify(err, null, 2));
+      console.error(err);
       return [];
     });
   },
@@ -518,7 +518,6 @@ module.exports = {
   //Description:  This function will delete an event with the specified
   // ID, if it exists. It returns a status object.
   deleteEvent(eventId) {
-    console
     return log.destroy({
       where: {
         id: eventId
