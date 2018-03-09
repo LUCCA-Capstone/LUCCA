@@ -103,12 +103,6 @@
 
   function fwd(obj) {
     var badge = obj.getAttribute("data-badge");
-    
-    $("#name").val("");
-    $("#dateRange").val("");
-    $("#stationSelector").val($("stationSelector option:eq(0)").val());
-    $("#statusSelector").val($("statusSelector option:eq(0)").val());
-    $("#badge").val("");
     window.location.href = ("/userManagement/" + badge), true;
   };
 
