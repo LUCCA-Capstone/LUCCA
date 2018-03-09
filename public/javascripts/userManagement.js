@@ -1,4 +1,8 @@
 $(function() {
+  $('#search').trigger('click');
+});
+
+$(function() {
 
   $('input[name="dateFilter"]').daterangepicker ({
     autoUpdateInput: false,
