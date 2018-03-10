@@ -537,12 +537,17 @@ module.exports = function (passport) {
     Promise.all([
       dbAPI.getStations(undefined),
       dbAPI.getPrivileges(BadgeNumber),
-      dbAPI.validateUser(BadgeNumber)
-    ])
-      .then(
-        ([allStations, trainedStation, userInfo]) => {
-          // console.log(allStations);
-          console.log(trainedStation);
+      dbAPI.validateUser(BadgeNumber),
+      dbAPI.getEvents(undefined, BadgeNumber, undefined, undefined)
+    ]).then(
+        ([allStations, trainedStation, userInfo, log]) => {
+          if (allStations === false) {
+            const err = "Interal error: Unable to get stations."
+            req.flash('error', err);
+            //Not sure if (or where) we should redirect in this unlikely case. If we don't redirect,
+            //it should leave them on a page with this flash message - which is maybe the best option.
+            //The navbar will be functional for redirection and the log events will render if DB is up.
+          }
           var flag = new Boolean(false);
           for (var i = 0; i < allStations.length; ++i) {
             for (var j = 0; j < trainedStation.length; ++j) {
@@ -557,11 +562,19 @@ module.exports = function (passport) {
             }
             flag = false;
           }
-          res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations });
+          
+          //put most recent events first
+          if (Array.isArray(log)) {
+            log.sort(function (a, b) {
+              return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
+            });
+          }
+
+          res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations, log});
         }
-      )
-      .catch(
+      ).catch(
         err => {
+          req.flash("error", "Internal error on user details ")
           console.warn("something went wrong:", err);
           res.status(500).send(err);
         }
