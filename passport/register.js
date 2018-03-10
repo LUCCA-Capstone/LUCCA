@@ -27,11 +27,16 @@ module.exports = new LocalStrategy({
         return done(null, false);
       }
 
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      db.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has registered a new admin with badge ID: ${user.badge}`);
+
       var newAdminCreds = {
         password: bCrypt.hashSync(password),
         status: 'Admin'
       }
-
+      
       db.modifyUser(user.badge, newAdminCreds).then(function (result) {
         db.validateUser(user.badge).then(function (newUser) {
           return done(null, newUser);

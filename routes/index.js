@@ -65,7 +65,7 @@ module.exports = function (passport) {
       .exists()
       .custom((value, { req }) => value === req.body.password),
   ], checkRegistration, passport.authenticate('register', {
-    successRedirect: '/adminLogin',
+    successRedirect: '/logout',
     failureRedirect: '/adminRegister'
   }));
 
@@ -91,7 +91,7 @@ module.exports = function (passport) {
       .exists()
       .custom((value, { req }) => value === req.body.password),
   ], checkRegistration, passport.authenticate('reset', {
-    successRedirect: '/adminLogin',
+    successRedirect: '/logout',
     failureRedirect: '/adminReset'
   }));
 
@@ -167,6 +167,7 @@ module.exports = function (passport) {
         req.flash('error', 'Email or badge number may already be in use');
         res.redirect(req.path);
       } else {
+        dbAPI.logEvent('user traffic', req.params.badge, `A new user has been registered with badge ID: ${req.params.badge}`);
         req.flash('success', "Thank you, " + req.body.first + ", you have registered. Please badge in to use the lab.");
         res.redirect('/badgein');
       }
@@ -185,9 +186,13 @@ module.exports = function (passport) {
   ], checkRegistration, jsonParser, postBadgeIn);
 
 
-  router.get('/logout', function (req, res) {
+  router.get('/logout', checkAuth, function (req, res) {
+    let adminName = req.user.first + ' ' + req.user.last;
+    let adminEmail = req.user.email;
+    let adminBadge = req.user.badge;
+    dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has logged out of web app UI`);
     req.logout();
-    res.redirect('/');
+    res.redirect('/adminLogin');
   });
 
 
@@ -199,19 +204,17 @@ module.exports = function (passport) {
     Promise.all([
       dbAPI.getUsers(undefined),
       dbAPI.getStations()
-
-    ])
-      .then(
-        ([allUsers, allStations]) => {
-          var data = {
-            users: allUsers,
-            stations: allStations,
-            authenticated: true
-          }
-
-          res.render('userManagement.njk', data);
+    ]).then(
+      ([allUsers, allStations]) => {
+        var data = {
+          users: allUsers,
+          stations: allStations,
+          authenticated: true
         }
-      )
+
+        res.render('userManagement.njk', data);
+      }
+    )
       .catch(
         err => {
           console.warn("something went wrong:", err);
@@ -239,74 +242,71 @@ module.exports = function (passport) {
       dbAPI.getUsers(startDate, endDate),
       dbAPI.getPrivilegedStationUsers(req.body.stationSelector),
       dbAPI.getStations()
-    ])
-
-      .then(
-        ([usersByDate, privUsers, allStations]) => {
-          if (!usersByDate) {
-            const err = "Interal error: Unable to get users."
-            req.flash('error', err);
-            res.status(500).send(err + "via the /userManagement (post) route.");
-            res.redirect('/userManagement');
-          }
-
-          /*Filter by most specific items first to limit number of comparisons. Also, if user didn't
-          *provide a particular input, no comparisons happen at that step. Must check all provided input, 
-          *however; cannot return match prematurely as later filter may weed it out.*/
-          let stationMatchesArray = new Array();
-          let badgeFilter = req.body.badgeInput
-            ? usersByDate.filter(x =>
-              x.badge.indexOf(req.body.badgeInput) > -1)
-            : usersByDate;
-          let nameFilter = req.body.nameInput
-            ? badgeFilter.filter(x =>
-              (x.first + " " + x.last)
-                .toUpperCase()
-                .indexOf(req.body.nameInput.toUpperCase()) > -1)
-            : badgeFilter;
-          let statusFilter = undefined; //specified below; too complex for ternery operator
-
-          let data = {
-            stations: allStations,
-            authenticated: true
-            //users get added below
-          }
-
-          if (req.body.statusSelector === "All" || req.body.statusSelector === "" || req.body.statusSelector === undefined) {
-            //User did not specify search by status or explicity chose "All" statuses
-            statusFilter = nameFilter;
-          } else {
-            //User specified a particular status by which we should search
-            statusFilter = nameFilter.filter(x => x.status === req.body.statusSelector);
-          }
-
-          if (req.body.stationSelector === "All" || req.body.stationSelector === "" || req.body.stationSelector === undefined) {
-            //User did not specify search by station, or explicitly chose "All" stations
-            data.users = statusFilter;
-          } else {
-            //If user specified a particular station, iterate over getPrivilegedStationUsers results
-            privUsers.forEach(function (privElement) {
-              statusFilter.forEach(function (statusElement) {
-                if (privElement.badge == statusElement.badge) {
-                  stationMatchesArray.push(privElement);
-                }
-              });
-            });
-
-            data.users = stationMatchesArray;
-          }
-
-          res.send(data);
-        }
-      )
-
-      .catch(
-        err => {
-          req.flash('error', err.details);
-          res.status(500).send(err);
+    ]).then(
+      ([usersByDate, privUsers, allStations]) => {
+        if (!usersByDate) {
+          const err = "Interal error: Unable to get users."
+          req.flash('error', err);
+          res.status(500).send(err + "via the /userManagement (post) route.");
           res.redirect('/userManagement');
         }
-      )
+
+        /*Filter by most specific items first to limit number of comparisons. Also, if user didn't
+        *provide a particular input, no comparisons happen at that step. Must check all provided input, 
+        *however; cannot return match prematurely as later filter may weed it out.*/
+        var stationMatchesArray = new Array();
+        var badgeFilter = req.body.badgeInput
+          ? usersByDate.filter(x =>
+            x.badge.indexOf(req.body.badgeInput) > -1)
+          : usersByDate;
+        var nameFilter = req.body.nameInput
+          ? badgeFilter.filter(x =>
+            (x.first + " " + x.last)
+              .toUpperCase()
+              .indexOf(req.body.nameInput.toUpperCase()) > -1)
+          : badgeFilter;
+        var statusFilter = undefined; //specified below; too complex for ternery operator
+
+        var data = {
+          stations: allStations,
+          authenticated: true
+          //users get added below
+        }
+
+        if (req.body.statusSelector === "All" || req.body.statusSelector === "" || req.body.statusSelector === undefined) {
+          //User did not specify search by status or explicity chose "All" statuses
+          statusFilter = nameFilter;
+        } else {
+          //User specified a particular status by which we should search
+          statusFilter = nameFilter.filter(x => x.status === req.body.statusSelector);
+        }
+
+
+        if (req.body.stationSelector === "All" || req.body.stationSelector === "" || req.body.stationSelector === undefined) {
+          //User did not specify search by station, or explicitly chose "All" stations
+          data.users = statusFilter;
+        } else {
+          //If user specified a particular station, iterate over getPrivilegedStationUsers results
+          privUsers.forEach(function (privElement) {
+            statusFilter.forEach(function (statusElement) {
+              if (privElement.badge == statusElement.badge) {
+                stationMatchesArray.push(privElement);
+              }
+            });
+          });
+
+          data.users = stationMatchesArray;
+        }
+
+        res.send(data);
+      }
+    ).catch(
+      err => {
+        req.flash('error', err.details);
+        res.status(500).send(err);
+        res.redirect('/userManagement');
+      }
+    )
   });
 
 
@@ -323,16 +323,22 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var DeletedBadge = req.params.badge;
-    if(DeletedBadge===req.user.badge)
-    {
-      req.flash('error', 'Not allowed to delete yourself as an Admin');      
-      res.redirect('/userManagement/' + DeletedBadge);
-      return; 
+
+    let deletedBadge = req.params.badge;
+
+    if (deletedBadge === req.user.badge) {
+      req.flash('error', 'Not allowed to delete yourself as an Admin');
+      res.redirect('/userManagement/' + deletedBadge);
+      return;
     }
-    dbAPI.deleteUser(DeletedBadge).then(function (result) {
-      console.log("user is deleted successfully");
+
+    dbAPI.deleteUser(deletedBadge).then(function (result) {
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has deleted user with badge ID: ${deletedBadge}`);
     });
+
     req.flash('success', 'The user has been successfully deleted from the system');
     req.flash('fade_out', '3000');
     res.redirect('/userManagement');
@@ -343,13 +349,16 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
+    let badgeID = req.params.badge;
     dbAPI.modifyUser(badgeID, { confirmation: true }).then(function (result) {
       if (result == undefined) {
-        console.log("Error");
+        console.log("Error with user confirmation/validation");
       }
       else {
-        console.log("confirmation changed successfully");
+        let adminName = req.user.first + ' ' + req.user.last;
+        let adminEmail = req.user.email;
+        let adminBadge = req.user.badge;
+        dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has validated user with badge ID: ${badgeID}`);
       }
     });
     req.flash('success', 'This user is confirmed successfully');
@@ -362,10 +371,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
-    var StationID = req.params.station;
-    dbAPI.removePrivileges(badgeID, StationID).then(function (result) {
-      console.log(result);
+    let badgeID = req.params.badge;
+    let stationID = req.params.station;
+    dbAPI.removePrivileges(badgeID, stationID).then(function (result) {
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has removed privileges to user with badge ID: ${badgeID} for station ID: ${stationID}`);
+      dbAPI.logEvent('privilege', badgeID, `User with badge ID: ${badgeID} has lost privilege to station with ID: ${stationID}`);
     });
     req.flash('success', 'The users access to the selected station has been revoked');
     req.flash('fade_out', '3000');
@@ -377,10 +390,14 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
-    var StationID = req.params.station;
-    dbAPI.grantPrivileges(badgeID, StationID).then(function (result) {
-      console.log(result);
+    let badgeID = req.params.badge;
+    let stationID = req.params.station;
+    dbAPI.grantPrivileges(badgeID, stationID).then(function (result) {
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has granted privileges to user with badge ID: ${badgeID} for station ID: ${stationID}`);
+      dbAPI.logEvent('privilege', badgeID, `User with badge ID: ${badgeID} has been given privilege to station with ID: ${stationID}`);
     });
     req.flash('success', 'The user has been successfully granted access to the selected station');
     req.flash('fade_out', '3000');
@@ -393,8 +410,7 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
-
+    let badgeID = req.params.badge;
     dbAPI.validateUser(badgeID).then(function (ret) {
       if (ret.status == "User" && ret.status != "Admin") {
         dbAPI.modifyUser(badgeID, { status: "Manager" }).then(function (result) {
@@ -402,7 +418,13 @@ module.exports = function (passport) {
             req.flash("error", "Internal error: unable to promote " + badgeID);
           }
           else {
-            req.flash("success", "Successfully promoted user associated with Badge number " + badgeID);
+            let adminName = req.user.first + ' ' + req.user.last;
+            let adminEmail = req.user.email;
+            let adminBadge = req.user.badge;
+            dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has promoted user with badge ID: ${badgeID} to Manager status`);
+            dbAPI.logEvent('privilege', badgeID, `User with badge ID: ${badgeID} has been promoted to Manager status`);
+            req.flash('success', 'Successfully promoted user with badge number ' + badgeID + ' to Manager status');
+            req.flash('fade_out', '3000');
           }
           res.redirect('/userManagement/' + badgeID);
         }); //end modifyUserCall
@@ -418,28 +440,25 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
-
+    let badgeID = req.params.badge;
     dbAPI.validateUser(badgeID).then(function (ret) {
-      console.log(ret.dataValues);
-      console.log("USER STATUS " + ret.status);
-
       if (ret.status == "Manager" && ret.status != "Admin") {
         dbAPI.modifyUser(badgeID, { status: "User" }).then(function (result) {
           if (result == undefined) {
-            console.log("Error");
-          }
-          else {
-            console.log("demotion changed successfully");
+            console.log("Error could not demote manager");
+          } else {
+            let adminName = req.user.first + ' ' + req.user.last;
+            let adminEmail = req.user.email;
+            let adminBadge = req.user.badge;
+            dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has demoted user with badge ID: ${badgeID} to User status`);
+            dbAPI.logEvent('privilege', badgeID, `User with badge ID: ${badgeID} has been demoted to User status`);
           }
         });
       }
       req.flash('success', 'The Manager has been successfully demoted to User status');
       req.flash('fade_out', '3000');
       res.redirect('/userManagement/' + badgeID);
-
     });
-
   });
 
 
@@ -448,11 +467,10 @@ module.exports = function (passport) {
       return res.sendStatus(400);
     }
     let badgeID = req.params.badge;
-    if(badgeID===req.user.badge)
-    {
-      req.flash('error', 'Not allowed to demote yourself from being an Admin');      
+    if (badgeID === req.user.badge) {
+      req.flash('error', 'Not allowed to demote yourself from being an Admin');
       res.redirect('/userManagement/' + badgeID);
-      return; 
+      return;
     }
     dbAPI.validateUser(badgeID).then(function (ret) {
 
@@ -482,35 +500,33 @@ module.exports = function (passport) {
     if (!req.body) {
       return res.sendStatus(400);
     }
-    var badgeID = req.params.badge;
+    let badgeID = req.params.badge;
 
     dbAPI.validateUser(badgeID).then(function (ret) {
-
       if (ret.loggedIn === true) {
         dbAPI.modifyUser(badgeID, { loggedIn: false }).then(function (result) {
           if (result == undefined) {
             console.log("Error");
           }
           else {
-            console.log("user Badged out successfully");
-
+            let adminName = req.user.first + ' ' + req.user.last;
+            let adminEmail = req.user.email;
+            let adminBadge = req.user.badge;
+            dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has badged out user with badge ID: ${badgeID} out of the lab`);
+            dbAPI.logEvent('user traffic', badgeID, `User with badge ID: ${badgeID} has been badged out of the lab`);
           }
         });
       }
       req.flash('success', 'The user has been successfully badged out of the lab');
       req.flash('fade_out', '3000');
       res.redirect('/userManagement/' + badgeID);
-
     });
-
   });
 
   router.get('/userManagement/getPrivilegedStationUsers/:sid', checkAuth, function (req, res) {
-
     Promise.all([
       dbAPI.getPrivilegedStationUsers(req.params.sid),
       dbAPI.getStations()
-
     ])
       .then(
         ([allUsers, allStations]) => {
@@ -519,7 +535,6 @@ module.exports = function (passport) {
             stations: allStations,
             authenticated: true
           }
-
           res.render('userManagement.njk', data);
         }
       )
@@ -531,6 +546,7 @@ module.exports = function (passport) {
       );
   });
 
+
   router.get('/userManagement/:badge', checkAuth, function (req, res) {
     var BadgeNumber = req.params.badge;
     Promise.all([
@@ -539,78 +555,82 @@ module.exports = function (passport) {
       dbAPI.validateUser(BadgeNumber),
       dbAPI.getEvents(undefined, BadgeNumber, undefined, undefined)
     ]).then(
-        ([allStations, trainedStation, userInfo, log]) => {
-          if (allStations === false) {
-            const err = "Interal error: Unable to get stations."
-            req.flash('error', err);
-            //Not sure if (or where) we should redirect in this unlikely case. If we don't redirect,
-            //it should leave them on a page with this flash message - which is maybe the best option.
-            //The navbar will be functional for redirection and the log events will render if DB is up.
-          }
-          let flag = new Boolean(false);
-          for (let i = 0; i < allStations.length; ++i) {
-            for (let j = 0; j < trainedStation.length; ++j) {
-              if (allStations[i].sId === trainedStation[j].sId) {
-                allStations[i].trained = true;
-                allStations[i].trainedDate = trainedStation[j].updatedAt;
-                flag = true;
-              }
-            }
-            if (flag != true) {
-              allStations[i].trained = false;
-            }
-            flag = false;
-          }
-          
-          res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations, log});
+      ([allStations, trainedStation, userInfo, log]) => {
+        if (allStations === false) {
+          const err = "Interal error: Unable to get stations."
+          req.flash('error', err);
+          //Not sure if (or where) we should redirect in this unlikely case. If we don't redirect,
+          //it should leave them on a page with this flash message - which is maybe the best option.
+          //The navbar will be functional for redirection and the log events will render if DB is up.
         }
-      ).catch(
-        err => {
-          req.flash("error", "Internal error on user details ")
-          console.warn("something went wrong:", err);
-          res.status(500).send(err);
+        let flag = new Boolean(false);
+        for (let i = 0; i < allStations.length; ++i) {
+          for (let j = 0; j < trainedStation.length; ++j) {
+            if (allStations[i].sId === trainedStation[j].sId) {
+              allStations[i].trained = true;
+              allStations[i].trainedDate = trainedStation[j].updatedAt;
+              flag = true;
+            }
+          }
+          if (flag != true) {
+            allStations[i].trained = false;
+          }
+          flag = false;
         }
-      );
+
+        res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations, log });
+      }
+    ).catch(
+      err => {
+        req.flash("error", "Internal error on user details ")
+        console.warn("something went wrong:", err);
+        res.status(500).send(err);
+      }
+    );
+  });
+
+  
+  router.post('/userManagement/updateUserInfo/:badge', [
+    check('email')
+      .exists()
+      .isEmail().withMessage('Please enter valid email')
+      .trim()
+      .normalizeEmail()
+      .custom(value => {
+        return dbAPI.validateUser(value).then(user => {
+          if (user != undefined)
+            throw new Error('The email you provided is already in use');
+        });
+      })
+      .optional(),
+
+    check('phone')
+      .isMobilePhone('any').withMessage('Please enter valid phone number')
+      .optional(),
+
+    check('ecPhone')
+      .isMobilePhone('any').withMessage('Please enter valid emergency contact phone number')
+      .optional(),
+  ], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let mappedErrors = errors.mapped();
+      for (let val in mappedErrors) {
+        req.flash('error', mappedErrors[val]['msg']);
+      }
+    } else {
+      dbAPI.modifyUser(req.params.badge, req.body);
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has updated the information of user with badge ID: ${req.params.badge}`);
+      req.flash('success', 'Successfully updated user info');
+    }
+    res.redirect('/userManagement/' + req.params.badge);
   });
 
   return router;
 }
-
-router.post('/userManagement/updateUserInfo/:badge', [
-  check('email')
-    .exists()
-    .isEmail().withMessage('Please enter valid email')
-    .trim()
-    .normalizeEmail()
-    .custom(value => {
-      return dbAPI.validateUser(value).then(user => {
-        if (user != undefined)
-          throw new Error('The email you provided is already in use');
-      });
-    })
-    .optional(),
-
-  check('phone')
-    .isMobilePhone('any').withMessage('Please enter valid phone number')
-    .optional(),
-
-  check('ecPhone')
-    .isMobilePhone('any').withMessage('Please enter valid emergency contact phone number')
-    .optional(),
-], function (req, res) {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    let mappedErrors = errors.mapped();
-    for (let val in mappedErrors) {
-      req.flash('error', mappedErrors[val]['msg']);
-    }
-  } else {
-    dbAPI.modifyUser(req.params.badge, req.body);
-    req.flash('success', 'Successfully updated user info');
-  }
-  res.redirect('/userManagement/' + req.params.badge);
-});
-
 
 var checkAuth = function (req, res, next) {
   if (req.isAuthenticated())
@@ -649,17 +669,17 @@ function getStnMngmnt(req, res) {
         }
         let flag = false;
         let name;
-        for(let i = 0; i < data.obj.length; ++i){
+        for (let i = 0; i < data.obj.length; ++i) {
           for (let key in userStationRel) {
-            if(data.obj[i].sId == key){
-              if(userStationRel[key].user){
+            if (data.obj[i].sId == key) {
+              if (userStationRel[key].user) {
                 name = userStationRel[key].user.split(',');
                 data.obj[i].usedBy = name[1] + ' ' + name[0] + ' (' + userStationRel[key].badge + ')';
                 flag = true;
               }
             }
           }
-          if(!flag){
+          if (!flag) {
             data.obj[i].usedBy = "";
           }
           flag = false;
@@ -686,10 +706,16 @@ function postStnMngr(req, res, next) {
     return res.sendStatus(400);
   }
 
+  let adminName = req.user.first + ' ' + req.user.last;
+  let adminEmail = req.user.email;
+  let adminBadge = req.user.badge;
+
   if (req.body.delete === "true") {
     //delete station referenced by sId in body
     dbAPI.deleteStation(req.body.sId).then(function (ret) {
       if (ret.result === true) {
+        dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has deleted station with ID: ${req.body.sId}`);
+        dbAPI.logEvent('station', req.body.sId, `Admin ${adminName} (${adminBadge}) has deleted station with ID: ${req.body.sId}`);
         req.flash('sucess', req.body.name + " has been successfully deleted.");
       } else {
         req.flash('error', "Internal problem - unable to delete " + req.body.name + ".");
@@ -704,6 +730,8 @@ function postStnMngr(req, res, next) {
     dbAPI.modifyStation(req.body.sId, req.body).then(function (ret) {
       //prepare to pass success message to next()
       if (ret.result === true) {
+        dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has updated information for station with ID: ${req.body.sId}`);
+        dbAPI.logEvent('station', adminBadge, `Admin ${adminName} (${adminBadge}) has updated information for station with ID: ${req.body.sId}`);
         req.flash('success', req.body.name + " has been succesfully updated.");
       } else {
         req.flash('error', "Internal problem - unable to update " + req.body.name + ".");
@@ -735,14 +763,14 @@ function postBadgeIn(req, res, next) {
       if (BadgeInFlag === false) {
         req.flash('success', 'You successfully badged into the lab!');
         req.flash('fade_out', '3000');
-        dbAPI.logEvent("user traffic", badgeNumber, 'User clocked in to lab');
+        dbAPI.logEvent('user traffic', badgeNumber, `User with badge ID: ${badgeNumber} clocked in to lab`);
         dbAPI.modifyUser(badgeNumber, { loggedIn: true });
         res.redirect('/badgein');
       }
       else if (BadgeInFlag === true) {
         req.flash('success', 'You successfully badged out the lab!');
         req.flash('fade_out', '3000');
-        dbAPI.logEvent("user traffic", badgeNumber, 'User clocked out of lab');
+        dbAPI.logEvent('user traffic', badgeNumber, `User with badge ID: ${badgeNumber} clocked out of lab`);
         dbAPI.modifyUser(badgeNumber, { loggedIn: false });
         res.redirect('/badgein');
       }
