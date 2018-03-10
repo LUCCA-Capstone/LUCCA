@@ -643,11 +643,15 @@ function getStnMngmnt(req, res) {
           req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
         }
         var flag = false;
+        var name;
         for(var i = 0; i < data.obj.length; ++i){
           for (var key in userStationRel) {
             if(data.obj[i].sId == key){
-              data.obj[i].usedBy = userStationRel[key].user;
-              flag = true;
+              if(userStationRel[key].user){
+                name = userStationRel[key].user.split(',');
+                data.obj[i].usedBy = name[1] + ' ' + name[0] + ' (' + userStationRel[key].badge + ')';
+                flag = true;
+              }
             }
           }
           if(!flag){
@@ -656,7 +660,7 @@ function getStnMngmnt(req, res) {
           flag = false;
         }
         // console.log(data.obj);
-        // console.log(userStationRel);
+        console.log(userStationRel);
         res.render('stationManagement.njk', data);
       }
     )
