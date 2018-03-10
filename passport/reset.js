@@ -28,6 +28,11 @@ module.exports = new LocalStrategy({
         return done(null, false);
       }
 
+      let adminName = req.user.first + ' ' + req.user.last;
+      let adminEmail = req.user.email;
+      let adminBadge = req.user.badge;
+      db.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has reset the admin password for admin with badge ID: ${user.badge}`);
+
       var newAdminCreds = {
         password: bCrypt.hashSync(password),
       }

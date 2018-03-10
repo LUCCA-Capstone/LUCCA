@@ -31,6 +31,9 @@ module.exports = new LocalStrategy({
         return done(null, false);
       }
 
+      let adminName = user.first + ' ' + user.last;
+      db.logEvent('administration', user.badge, `Admin ${adminName} (${user.email}) has logged into the web app through UI`);
+
       return done(null, user);
     });
   }
