@@ -22,7 +22,7 @@
 
 {% block content %}
 {# User Information Table #}
-<div class="container mb-5 pb-5">
+<div class="container mb-3 pb-3">
 <div class="row">
     <div class="col-xs-6 col-sm-6 col-md-6 col-lg-6">
         <div class="table-responsive">
@@ -190,6 +190,45 @@
             </table>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="panel panel-default user_panel">
+  <div class="panel-heading">
+    <h3 class="panel-title pl-2">Events associated with {{user.first}} {{user.last}} ({{user.badge}})</h3>
+  </div>
+</div>
+
+<div class="container mb-5 pb-5">
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr class="d-flex">
+                <th class="col-2">ID</th>
+                <th class="col-2">Event Type</th>
+                <th class="col-4">Date</th>
+                <th class="col-4">Event</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if log | length %}
+               {% for entry in log %}
+                <tr class="d-flex">
+                    <td class="col-2">{{entry.id}}</td>
+                    <td class="col-2">{{entry.eventClass}}</td>
+                    <td class="col-4">{{entry.eventDate}}</td>                    
+                    <td class="col-4">{{entry.event}}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr class="d-flex">
+                    {% for i in [2,2,4,4]%}
+                        <td class="col-{{i}}">No data exists yet.</td>
+                    {% endfor %}
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
