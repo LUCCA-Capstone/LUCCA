@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+#################################################################
+# Copyright (c) 2018 Daniel Eynis, Bishoy Hanna, Bryan Mikkelson,
+# Justin Moore, Huy Nguyen, Michael Olivas, Andrew Wood          
+# This program is licensed under the "MIT License".              
+# Please see the file LICENSE in the source                      
+# distribution of this software for license terms.               
+#################################################################
+
 """
 This script provides a way to generate simulated API actions similar to that expected from the LUCCA station hardware. It also validates any responses sent by the server software to whatever degree is possible.
 
