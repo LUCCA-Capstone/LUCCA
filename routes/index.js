@@ -222,11 +222,11 @@ module.exports = function (passport) {
 
   router.post('/userManagement', checkAuth, jsonParser, function (req, res) {
     //Parse valid date objects for accurage searching in database
-    var dateRangeArray = req.body.dateFilter ? req.body.dateFilter.split(" - ") : undefined;
-    var startRange = (dateRangeArray && dateRangeArray[0]) ? Date.parse(dateRangeArray[0]) : undefined;
-    var endRange = (dateRangeArray && dateRangeArray[1]) ? Date.parse(dateRangeArray[1]) : undefined;
-    var startDate = startRange ? new Date(startRange) : undefined;
-    var endDate = undefined;
+    let dateRangeArray = req.body.dateFilter ? req.body.dateFilter.split(" - ") : undefined;
+    let startRange = (dateRangeArray && dateRangeArray[0]) ? Date.parse(dateRangeArray[0]) : undefined;
+    let endRange = (dateRangeArray && dateRangeArray[1]) ? Date.parse(dateRangeArray[1]) : undefined;
+    let startDate = startRange ? new Date(startRange) : undefined;
+    let endDate = undefined;
 
     /*newDate(endRange) will return the user's requested end date at 00:00:00. We add a day so that
      *when we search the database, we search through the end of today (i.e. until tomorrow at 00:00.*/
@@ -253,20 +253,20 @@ module.exports = function (passport) {
           /*Filter by most specific items first to limit number of comparisons. Also, if user didn't
           *provide a particular input, no comparisons happen at that step. Must check all provided input, 
           *however; cannot return match prematurely as later filter may weed it out.*/
-          var stationMatchesArray = new Array();
-          var badgeFilter = req.body.badgeInput
+          let stationMatchesArray = new Array();
+          let badgeFilter = req.body.badgeInput
             ? usersByDate.filter(x =>
               x.badge.indexOf(req.body.badgeInput) > -1)
             : usersByDate;
-          var nameFilter = req.body.nameInput
+          let nameFilter = req.body.nameInput
             ? badgeFilter.filter(x =>
               (x.first + " " + x.last)
                 .toUpperCase()
                 .indexOf(req.body.nameInput.toUpperCase()) > -1)
             : badgeFilter;
-          var statusFilter = undefined; //specified below; too complex for ternery operator
+          let statusFilter = undefined; //specified below; too complex for ternery operator
 
-          var data = {
+          let data = {
             stations: allStations,
             authenticated: true
             //users get added below
@@ -548,9 +548,9 @@ module.exports = function (passport) {
             //it should leave them on a page with this flash message - which is maybe the best option.
             //The navbar will be functional for redirection and the log events will render if DB is up.
           }
-          var flag = new Boolean(false);
-          for (var i = 0; i < allStations.length; ++i) {
-            for (var j = 0; j < trainedStation.length; ++j) {
+          let flag = new Boolean(false);
+          for (let i = 0; i < allStations.length; ++i) {
+            for (let j = 0; j < trainedStation.length; ++j) {
               if (allStations[i].sId === trainedStation[j].sId) {
                 allStations[i].trained = true;
                 allStations[i].trainedDate = trainedStation[j].updatedAt;
