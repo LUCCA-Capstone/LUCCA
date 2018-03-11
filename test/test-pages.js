@@ -1,3 +1,11 @@
+/******************************************************************
+  * Copyright (c) 2018 Daniel Eynis, Bishoy Hanna, Bryan Mikkelson,
+  * Justin Moore, Huy Nguyen, Michael Olivas, Andrew Wood          
+  * This program is licensed under the "MIT License".              
+  * Please see the file LICENSE in the source                      
+  * distribution of this software for license terms.               
+/******************************************************************/
+
 var chai = require('chai');
 var request = require('request');
 var fs = require('fs');
