@@ -634,10 +634,10 @@ function getStnMngmnt(req, res) {
           data.obj = ret;
           req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
         }
-        var flag = false;
-        var name;
-        for(var i = 0; i < data.obj.length; ++i){
-          for (var key in userStationRel) {
+        let flag = false;
+        let name;
+        for(let i = 0; i < data.obj.length; ++i){
+          for (let key in userStationRel) {
             if(data.obj[i].sId == key){
               if(userStationRel[key].user){
                 name = userStationRel[key].user.split(',');
@@ -651,8 +651,6 @@ function getStnMngmnt(req, res) {
           }
           flag = false;
         }
-        // console.log(data.obj);
-        console.log(userStationRel);
         res.render('stationManagement.njk', data);
       }
     )
