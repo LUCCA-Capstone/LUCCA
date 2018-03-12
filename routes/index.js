@@ -562,13 +562,6 @@ module.exports = function (passport) {
             }
             flag = false;
           }
-          
-          //put most recent events first
-          if (Array.isArray(log)) {
-            log.sort(function (a, b) {
-              return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
-            });
-          }
 
           res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations, log});
         }
@@ -768,12 +761,6 @@ function getEvents(req, res) {
   var data = { authenticated: true }
 
   dbAPI.getEvents(filterClass).then(function (ret) {
-    //if array of results returned from database, sort with most recent date at top
-    if (Array.isArray(ret)) {
-      ret.sort(function (a, b) {
-        return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
-      });
-    }
     data.obj = ret;
     res.render('eventsLog.njk', data);
   }).
