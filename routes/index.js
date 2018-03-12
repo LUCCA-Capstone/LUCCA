@@ -280,7 +280,6 @@ module.exports = function (passport) {
             statusFilter = nameFilter.filter(x => x.status === req.body.statusSelector);
           }
 
-
           if (req.body.stationSelector === "All" || req.body.stationSelector === "" || req.body.stationSelector === undefined) {
             //User did not specify search by station, or explicitly chose "All" stations
             data.users = statusFilter;
@@ -563,13 +562,6 @@ module.exports = function (passport) {
             flag = false;
           }
           
-          //put most recent events first
-          if (Array.isArray(log)) {
-            log.sort(function (a, b) {
-              return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
-            });
-          }
-
           res.render('userManagementBadge.njk', { authenticated: true, user: userInfo.dataValues, allStations, log});
         }
       ).catch(
@@ -768,12 +760,6 @@ function getEvents(req, res) {
   var data = { authenticated: true }
 
   dbAPI.getEvents(filterClass).then(function (ret) {
-    //if array of results returned from database, sort with most recent date at top
-    if (Array.isArray(ret)) {
-      ret.sort(function (a, b) {
-        return (a.eventDate > b.eventDate) ? -1 : (a.eventDate < b.eventDate) ? 1 : 0;
-      });
-    }
     data.obj = ret;
     res.render('eventsLog.njk', data);
   }).
@@ -787,20 +773,18 @@ function getEvents(req, res) {
 //Simple helper function returns event class type that corresponds to filter
 function getFilterClass(filter) {
   switch (filter) {
-    case "badgeIn":
-      return "EPL Badge IN";
-    case "generic":
-      return "generic_event";
-    case "different":
-      return "different_event";
-    case "statusReq":
-      return "station-status request";
-    case "stnReset":
-      return "station-reset";
-    case "stnMngmnt":
-      return "station management";
+    case "userTraffic":
+      return "user traffic";
+    case "privilege":
+      return "privilege";
+    case "admin":
+      return "administration";
+    case "station":
+      return "station";
+    case "error":
+      return "internal error";
     default:
-      return undefined;
+      return undefined; //includes "all"
   }
 }
 
