@@ -39,13 +39,12 @@
           Filter by event
         </button>
         <div class="dropdown-menu" aria-labelledby="dropRightMenu">
-          <a class="dropdown-item" href="/eventsLog/badgeIn">Badge in event</a>
-          <a class="dropdown-item" href="/eventsLog/stnMngmnt">Station management stuff</a>
-          <a class="dropdown-item" href="/eventsLog/generic">Generic event</a>
-          <a class="dropdown-item" href="/eventsLog/different">Different event</a>
-          <a class="dropdown-item" href="/eventsLog/statusReq">Status request</a>
-          <a class="dropdown-item" href="/eventsLog/stnReset">Station reset</a>
           <a class="dropdown-item" href="/eventsLog/all">All log entries</a>
+          <a class="dropdown-item" href="/eventsLog/userTraffic">User traffic</a>
+          <a class="dropdown-item" href="/eventsLog/privilege">Privilege modifications</a>
+          <a class="dropdown-item" href="/eventsLog/admin">Administration</a>
+          <a class="dropdown-item" href="/eventsLog/station">Station activity</a>
+          <a class="dropdown-item" href="/eventsLog/error">Internal errors</a>
         </div>
       </div>
     </div>
@@ -62,6 +61,7 @@
         <tr>
           <th scope="col">ID</th>
           <th scope="col">Event class</th>
+          <th scope="col">Entity</th>
           <th scope="col">Event</th>
           <th scope="col">Date</th>
         </tr>
@@ -70,12 +70,9 @@
       {% for item in obj %}
         <tr>
           <form method="POST">
-            <td>{{item.id}}
-              <div class="col">
-                <input type="hidden" name="id" class="form-control" id="id" value="{{item.id}}">
-              </div>
-            </td>
+            <td>{{item.id}}</td>
             <td>{{item.eventClass}}</td>
+            <td>{{item.entity}}</td>
             <td>{{item.event}}</td>
             <td>{{item.eventDate}}</td>
           </form>
