@@ -509,7 +509,8 @@ module.exports = {
       queryParameters["entity"] = entity;
     }
     return log.findAll({
-      where: queryParameters
+      where: queryParameters,
+      order: [['eventDate', 'DESC']]
     }).then(function (data) {
       return data;
     }).catch(err => {

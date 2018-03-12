@@ -82,3 +82,7 @@ $('#search').on("click", function(event) {
     });
   });
 });
+
+$(".btn").mouseup(function(){
+  $(this).blur();
+})
