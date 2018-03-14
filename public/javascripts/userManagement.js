@@ -47,7 +47,7 @@ $('#search').on("click", function(event) {
    event.preventDefault();
 
   // Grab values from elements in searchForm:
-  var $form = $('#searchForm'),
+  let $form = $('#searchForm'),
     name = $("#name").val(),
     dateRange = $("#dateRange").val(),
     status = $("#statusSelector").val(),
@@ -56,7 +56,7 @@ $('#search').on("click", function(event) {
     url = '/userManagement';
   
   // Send the data using post
-  var posting = $.post( url, {
+  let posting = $.post( url, {
     nameInput: name,
     dateFilter: dateRange,
     statusSelector: status,
@@ -67,13 +67,13 @@ $('#search').on("click", function(event) {
   // Put the results in a div
   posting.done(function(data) {
     $('tbody').empty();
-    var tr = $('<tr></tr>'); //creates row
-    var td = $('<td></td>'); //creates cell
+    let tr = $('<tr></tr>'); //creates row
+    let td = $('<td></td>'); //creates cell
 
     // Create a row for each user from POST and append elements
     $.each(data.users, function (index, user) {
-      var row = tr.clone(); //deep copy
-      var butt = $('<button class="btn btn-primary" onclick="fwd(this)" data-badge="' + user.badge + '">Edit details</button>');
+      let row = tr.clone(); //deep copy
+      let butt = $('<button class="btn btn-primary" onclick="fwd(this)" data-badge="' + user.badge + '">Edit details</button>');
       row.append(td.clone().text(user.first + " " + user.last));
       row.append(td.clone().text(user.badge));
       row.append(td.clone().text(user.confirmation));
