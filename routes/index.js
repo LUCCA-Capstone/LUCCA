@@ -640,21 +640,20 @@ var checkAuth = function (req, res, next) {
 
 
 /*getStnMngmnt will render a table of all stations that match filter parameter.
-  *    If filter == "registered", only registered stations will be displayed (i.e. registered = true)
-  *    If filter == "unregistered", only unregistered stations will be displayed (i.e. registered = false)
+  *    If filter == "online", only online stations will be displayed (i.e. registered = true)
+  *    If filter == "offline", only offline stations will be displayed (i.e. registered = false)
   *    Otherwise, all stations will be displayed sorted with unregistered stations first.
   *********************************************************************************************************/
 function getStnMngmnt(req, res) {
   //set filter based on query parameter passed in
   var data = { authenticated: true }
   var filter = req.params.filter;
-  filter = (filter === "registered") ? true : (filter === "unregistered") ? false : undefined;
+  filter = (filter === "online") ? true : (filter === "offline") ? false : undefined;
 
   Promise.all([
     dbAPI.getStations(filter),
     userStationAPI.getAll()
-  ])
-    .then(
+  ]).then(
       ([ret, userStationRel]) => {
         if (ret !== false && ret !== undefined) {
           ret.sort(function (a, b) {
