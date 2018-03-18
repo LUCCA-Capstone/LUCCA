@@ -620,7 +620,7 @@ module.exports = function (passport) {
   });
 
   
-  router.post('/userManagement/updateUserInfo/:badge', [
+  router.post('/userManagement/updateUserInfo/:badge', checkAuth, [
     check('first')
       .trim()
       .not().isEmpty().withMessage('First name cannot be left blank')
