@@ -7,6 +7,8 @@
 /******************************************************************/
 
 $(function () {
+  $('#userNav').addClass("active")
+  
   $('#updateUser').on('click', function () {    
     let updatedData = {};
 

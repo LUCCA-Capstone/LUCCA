@@ -8,6 +8,7 @@
 
 $(function() {
   $('#search').trigger('click');
+  $('#userNav').addClass("active");
 });
 
 $(function() {
