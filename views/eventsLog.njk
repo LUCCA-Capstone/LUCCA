@@ -16,6 +16,10 @@
 <title>LUCCA Events Log</title>
 {% endblock %}
 
+{% block adminCurrent %}
+<a class="nav-link dropdown-toggle active" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin management<span class="sr-only">(current)</span></a>
+{% endblock %}
+
 {% block content %}
 
 <!-- Main page description -->
@@ -83,4 +87,12 @@
 </container>
 <!-- /container table for filtered station results -->
 <br /><br />
+{% endblock %}
+
+{% block custom_scripts %}
+<script>
+  $(function() {
+    $('#eventsNav').addClass("active");
+  });
+</script>
 {% endblock %}

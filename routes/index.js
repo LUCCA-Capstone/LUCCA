@@ -337,10 +337,18 @@ module.exports = function (passport) {
       let adminEmail = req.user.email;
       let adminBadge = req.user.badge;
       dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has deleted user with badge ID: ${deletedBadge}`);
-    });
+      dbAPI.logEvent('user traffic', deletedBadge, `User with badge ID: ${deletedBadge} has been deleted by Admin ${adminName}`);
+      req.flash('success', 'The user has been successfully deleted from the system');
+      req.flash('fade_out', '3000');
+    }).catch(
+      err => {
+        const errMessage = "Internal database error: Unable to delete user with badge number" + req.params.badge
+        req.flash('error', errMessage);
+        res.status(500).send(err);
+        res.redirect('/userManagement');
+      }
+    );
 
-    req.flash('success', 'The user has been successfully deleted from the system');
-    req.flash('fade_out', '3000');
     res.redirect('/userManagement');
   });
 
@@ -563,6 +571,15 @@ module.exports = function (passport) {
           //it should leave them on a page with this flash message - which is maybe the best option.
           //The navbar will be functional for redirection and the log events will render if DB is up.
         }
+
+        if (userInfo === undefined) {
+          //This error case likely means an admin either typed the URL manually, or clicked "Back" on the
+          //browser after "Delete"ing someone. Send back to userManagement page where error will be displayed
+          const err = "Internal error: No user found matching badge number " + BadgeNumber + "."
+          req.flash('error', err)
+          res.redirect('/userManagement')
+        }
+
         let flag = new Boolean(false);
         for (let i = 0; i < allStations.length; ++i) {
           for (let j = 0; j < trainedStation.length; ++j) {
@@ -582,7 +599,7 @@ module.exports = function (passport) {
       }
     ).catch(
       err => {
-        req.flash("error", "Internal error on user details ")
+        req.flash("error", "Internal database error on user details ")
         console.warn("something went wrong:", err);
         res.status(500).send(err);
       }
