@@ -69,13 +69,15 @@
               {% if authenticated %}
                 {% block adminManagement %}
                 <li class="nav-item dropdown">
+                    {% block adminCurrent %}
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin management</a>
+                    {% endblock %}
                     <div class="dropdown-menu" aria-labelledby="dropdown10">
-                      <a class="dropdown-item" href="/userManagement">Users</a>
-                      <a class="dropdown-item" href="/stationManagement/all">Stations</a>
-                      <a class="dropdown-item" href="/eventsLog/all">Events</a>
-                      <a class="dropdown-item" href="/adminRegister">Register new admin</a>
-                      <a class="dropdown-item" href="/adminReset">Reset an admin password</a>
+                      <a class="dropdown-item" id="userNav" href="/userManagement">Users</a>
+                      <a class="dropdown-item" id="stationNav" href="/stationManagement/all">Stations</a>
+                      <a class="dropdown-item" id="eventsNav" href="/eventsLog/all">Events</a>
+                      <a class="dropdown-item" id="regAdminNav" href="/adminRegister">Register new admin</a>
+                      <a class="dropdown-item" id="resetAdminNav" href="/adminReset">Reset an admin password</a>
                     </div>
                 </li>
                 <li class="nav-item">

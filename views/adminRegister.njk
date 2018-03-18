@@ -8,6 +8,10 @@
 
 {% extends '_layout.njk' %}
 
+{% block adminCurrent %}
+<a class="nav-link dropdown-toggle active" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin management<span class="sr-only">(current)</span></a>
+{% endblock %}
+
 {% block content %}
 <form action="/adminRegister" method="POST">
   <h2>Promote exiting user to admin</h2>
@@ -22,4 +26,12 @@
     </div>
   <button class="btn btn-primary" type="submit" role="button">Sign Up</button>
 </form>
+{% endblock %}
+
+{% block custom_scripts %}
+<script>
+  $(function() {
+    $('#regAdminNav').addClass("active");
+  });
+</script>
 {% endblock %}

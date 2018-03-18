@@ -8,6 +8,10 @@
 
 {% extends '_layout.njk' %}
 
+{% block adminCurrent %}
+<a class="nav-link dropdown-toggle active" href="#" id="dropdown10" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin management<span class="sr-only">(current)</span></a>
+{% endblock %}
+
 {% block content %}
 <form action="/adminReset" method="POST">
   <h2>Reset your admin (or another admins) account password</h2>
@@ -22,4 +26,12 @@
     </div>
   <button class="btn btn-primary" type="submit" role="button">Reset password</button>
 </form>
+{% endblock %}
+
+{% block custom_scripts %}
+<script>
+  $(function() {
+    $('#resetAdminNav').addClass("active");
+  });
+</script>
 {% endblock %}
