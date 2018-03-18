@@ -105,11 +105,16 @@
                 </tr>
                 <tr>
                     <th></th>
+                    <td>
+                        <form id="deleteForm" action="/userManagement/deleteUser/{{user.badge}}" method="post">
+                        <button type='submit' class="btn btn-primary" name='submit' value="">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
                     {% if user.confirmation  %}
                         <td>
-                            <form id="deleteForm" action="/userManagement/deleteUser/{{user.badge}}" method="post">
-                            <button type='submit' class="btn btn-primary" name='submit' value="">Delete</button>
-                            </form>
                         {% if user.status == "User"%}
                             <br> 
                             <form id="ChangeStatusToManager" action="/userManagement/promoteUser/{{user.badge}}" method="post">        

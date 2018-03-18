@@ -116,9 +116,15 @@ module.exports = function (passport) {
         });
       }),
 
-    check('first').exists().withMessage('Please enter first name'),
+    check('first')
+      .exists().withMessage('Please enter first name')
+      .trim()
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('First name cannot contain numbers'),
 
-    check('last').exists().withMessage('Please enter last name'),
+    check('last')
+      .exists().withMessage('Please enter last name')
+      .trim()
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('Last name cannot contain numbers'),
 
     check('email')
       .exists()
@@ -136,13 +142,20 @@ module.exports = function (passport) {
       .exists()
       .isMobilePhone('any').withMessage('Please enter valid phone number'),
 
-    check('signature').exists().withMessage('Please enter signature'),
+    check('signature', 'Electronic singature must be your \"Firstname Lastname\"')
+      .exists()
+      .trim()
+      .custom((value, { req }) => value === req.body.first + " " + req.body.last),
 
     check('ecSignature').exists(),
 
-    check('ecName').exists().withMessage('Please enter emergency contact name'),
+    check('ecName')
+      .exists().withMessage('Please enter emergency contact name')
+      .trim()
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('Emergency contact name cannot contain numbers'),
 
-    check('ecRel').exists().withMessage('Please enter emergency contact relationship'),
+    check('ecRel')
+      .exists().withMessage('Please enter emergency contact relationship'),
 
     check('ecPhone')
       .exists()
@@ -608,6 +621,18 @@ module.exports = function (passport) {
 
   
   router.post('/userManagement/updateUserInfo/:badge', [
+    check('first')
+      .trim()
+      .not().isEmpty().withMessage('First name cannot be left blank')
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('First name cannot contain numbers')
+      .optional(),
+
+    check('last')
+      .trim()
+      .not().isEmpty().withMessage('Last name cannot be left blank')
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('Last name cannot contain numbers')
+      .optional(),
+
     check('email')
       .exists()
       .isEmail().withMessage('Please enter valid email')
@@ -623,6 +648,17 @@ module.exports = function (passport) {
 
     check('phone')
       .isMobilePhone('any').withMessage('Please enter valid phone number')
+      .optional(),
+
+      check('ecName')
+      .trim()
+      .not().isEmpty().withMessage('Emergency contact name cannot be blank')
+      .not().matches(/[^0-9]*\d+?[^0-9]*/).withMessage('Emergency contact name cannot contain numbers')
+      .optional(),
+
+    check('ecRel')
+      .trim()
+      .not().isEmpty().withMessage('Emergency contact relationship cannot be blank')
       .optional(),
 
     check('ecPhone')
