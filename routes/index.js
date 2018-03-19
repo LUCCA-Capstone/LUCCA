@@ -353,6 +353,7 @@ module.exports = function (passport) {
       dbAPI.logEvent('user traffic', deletedBadge, `User with badge ID: ${deletedBadge} has been deleted by Admin ${adminName}`);
       req.flash('success', 'The user has been successfully deleted from the system');
       req.flash('fade_out', '3000');
+      res.redirect('/userManagement');
     }).catch(
       err => {
         const errMessage = "Internal database error: Unable to delete user with badge number" + req.params.badge
@@ -361,8 +362,6 @@ module.exports = function (passport) {
         res.redirect('/userManagement');
       }
     );
-
-    res.redirect('/userManagement');
   });
 
 
