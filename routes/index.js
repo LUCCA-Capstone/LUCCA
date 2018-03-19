@@ -205,7 +205,7 @@ module.exports = function (passport) {
     let adminBadge = req.user.badge;
     dbAPI.logEvent('administration', adminBadge, `Admin ${adminName} (${adminEmail}) has logged out of web app UI`);
     req.logout();
-    res.redirect('/adminLogin');
+    sessionRedirect(req, res, '/adminLogin');
   });
 
 
@@ -706,38 +706,38 @@ function getStnMngmnt(req, res) {
     dbAPI.getStations(filter),
     userStationAPI.getAll()
   ]).then(
-      ([ret, userStationRel]) => {
-        if (ret !== false && ret !== undefined) {
-          ret.sort(function (a, b) {
-            return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
-          });
-          //display sorted array of stations, unregistered stations first
-          data.obj = ret;
-        } else {
-          //display error to user if no database
-          data.obj = ret;
-          req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
-        }
-        let flag = false;
-        let name;
-        for (let i = 0; i < data.obj.length; ++i) {
-          for (let key in userStationRel) {
-            if (data.obj[i].sId == key) {
-              if (userStationRel[key].user) {
-                name = userStationRel[key].user.split(',');
-                data.obj[i].usedBy = name[1] + ' ' + name[0] + ' (' + userStationRel[key].badge + ')';
-                flag = true;
-              }
+    ([ret, userStationRel]) => {
+      if (ret !== false && ret !== undefined) {
+        ret.sort(function (a, b) {
+          return (a.registered === b.registered) ? 0 : a.registered ? 1 : -1;
+        });
+        //display sorted array of stations, unregistered stations first
+        data.obj = ret;
+      } else {
+        //display error to user if no database
+        data.obj = ret;
+        req.flash('error', "There was a problem communicating with the database. Please contact the DB administrator.")
+      }
+      let flag = false;
+      let name;
+      for (let i = 0; i < data.obj.length; ++i) {
+        for (let key in userStationRel) {
+          if (data.obj[i].sId == key) {
+            if (userStationRel[key].user) {
+              name = userStationRel[key].user.split(',');
+              data.obj[i].usedBy = name[1] + ' ' + name[0] + ' (' + userStationRel[key].badge + ')';
+              flag = true;
             }
           }
-          if (!flag) {
-            data.obj[i].usedBy = "";
-          }
-          flag = false;
         }
-        res.render('stationManagement.njk', data);
+        if (!flag) {
+          data.obj[i].usedBy = "";
+        }
+        flag = false;
       }
-    )
+      res.render('stationManagement.njk', data);
+    }
+  )
     .catch(
       err => {
         console.warn("something went wrong:", err);
@@ -816,14 +816,14 @@ function postBadgeIn(req, res, next) {
         req.flash('fade_out', '3000');
         dbAPI.logEvent('user traffic', badgeNumber, `User with badge ID: ${badgeNumber} clocked in to lab`);
         dbAPI.modifyUser(badgeNumber, { loggedIn: true });
-        res.redirect('/badgein');
+        sessionRedirect(req, res, '/badgein');        
       }
       else if (BadgeInFlag === true) {
         req.flash('success', 'You successfully badged out the lab!');
         req.flash('fade_out', '3000');
         dbAPI.logEvent('user traffic', badgeNumber, `User with badge ID: ${badgeNumber} clocked out of lab`);
         dbAPI.modifyUser(badgeNumber, { loggedIn: false });
-        res.redirect('/badgein');
+        sessionRedirect(req, res, '/badgein');
       }
     }
   });
@@ -888,4 +888,10 @@ function checkRegistration(req, res, next) {
   } else {
     next();
   }
+}
+
+function sessionRedirect(req, res, path) {
+  req.session.save(() => {
+    res.redirect(path);
+  });
 }

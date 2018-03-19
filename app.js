@@ -7,7 +7,7 @@
 /******************************************************************/
 
 var express = require('express');
-var path = require('path'); 
+var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
@@ -22,6 +22,8 @@ var register_strategy = require('./passport/register.js');
 var reset_strategy = require('./passport/reset.js');
 var db = require('./database/controllers/dbm');
 var flash = require('express-flash');
+const db_conn = require('./database/models/index.js');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
 var index = require('./routes/index');
 var api = require('./routes/api');
@@ -34,12 +36,21 @@ nunjucks.configure('views', {
   express: app
 });
 
+const sessionStore = new SequelizeStore({
+  db: db_conn.sequelize,
+});
 app.set('view engine', 'nunjucks');
-
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
-app.use(cookieParser('my_secret'));
-app.use(session({ secret: 'my_secret_session_key', cookie: { maxAge: 3600000 } }));
+app.use(cookieParser(config.get('Server', 'cookie_secret')));
+app.use(session({
+  secret: config.get('Server', 'cookie_secret'),
+  cookie: { maxAge: 3600000 },
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+}));
+sessionStore.sync();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
