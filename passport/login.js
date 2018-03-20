@@ -26,7 +26,7 @@ module.exports = new LocalStrategy({
         return done(null, false);
       }
 
-      if (!validPassword(user.password, password)) {
+      if (user.password === null || !validPassword(user.password, password)) {
         req.flash('error', 'Email or password is incorrect');
         return done(null, false);
       }
