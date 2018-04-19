@@ -347,6 +347,7 @@ module.exports = {
   },
 
   getStation(sId) {
+    var returnStatus = { result: true, detail: 'Success' };  //Status Code
     return machine.findAll({
       where: {
         sId: sId
