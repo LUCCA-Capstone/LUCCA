@@ -10,7 +10,7 @@ var config = require(__dirname + '/../../local_modules/config');
 
 module.exports = {
   development: {
-    username: config.get('Database', 'user'),
+    username: config.get('Database', 'username'),
     password: config.get('Database', 'password'),
     database: config.get('Database', 'database'),
     host: config.get('Database', 'host'),
